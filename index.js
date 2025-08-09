@@ -1,4 +1,4 @@
-export { default as BrowserFileSystemService } from "./BrowserFileSystem.js";
+export { default as BrowserFileSystemService } from "./BrowserFileSystem.ts";
 
 export const name = "@token-ring/browser-file-system";
 export const description =
