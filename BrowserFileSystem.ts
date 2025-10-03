@@ -1,4 +1,4 @@
-import { FileSystemService } from "@token-ring/filesystem";
+import { FileSystemService } from "@tokenring-ai/filesystem";
 
 // Simplified in-memory file structure - key is absolute path, value is { content }
 const mockFileSystem: Record<string, { content: string }> = {
@@ -73,18 +73,25 @@ export default class BrowserFileSystem extends FileSystemService {
 		throw new Error(`File not found: ${filePath}`);
 	}
 
-	async writeFile(filePath: string, content: string): Promise<void> {
+	async writeFile(
+		filePath: string,
+		content: string | Buffer,
+	): Promise<boolean> {
 		console.warn(
 			`BrowserFileSystemService: writeFile called for ${filePath}. This is a mock implementation.`,
 		);
+		const contentStr = Buffer.isBuffer(content)
+			? content.toString("utf-8")
+			: content;
 		if (mockFileSystem[filePath]) {
-			mockFileSystem[filePath].content = content;
+			mockFileSystem[filePath].content = contentStr;
 			console.log(`Mock writeFile: ${filePath} updated in memory.`);
-			return Promise.resolve();
+			return Promise.resolve(true);
 		}
-		throw new Error(
-			`File not found or path is not a file: ${filePath}. Cannot write.`,
-		);
+		// Create new file if it doesn't exist
+		mockFileSystem[filePath] = { content: contentStr };
+		console.log(`Mock writeFile: ${filePath} created in memory.`);
+		return Promise.resolve(true);
 	}
 
 	async deleteFile(filePath: string): Promise<never> {

@@ -1,14 +1,12 @@
 {
-	"name": "@token-ring/browser-file-system",
+	"name": "@tokenring-ai/browser-file-system",
 	"description": "Provides a browser-based mock FileSystemService using in-memory data.",
 	"version": "0.1.0",
 	"dependencies": {
-		"@token-ring/filesystem": "0.1.0",
-		"@token-ring/registry": "0.1.0",
-		"@token-ring/eslint-config": "0.0.0"
+		"@tokenring-ai/filesystem": "0.1.0"
 	},
 	"license": "MIT",
-	"main": "index.js",
+	"main": "index.ts",
 	"type": "module",
 	"scripts": {
 		"eslint": "eslint --fix ./"
