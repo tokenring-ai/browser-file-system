@@ -17,7 +17,6 @@ const mockFileSystem: Record<string, { content: string }> = {
 };
 
 export default class BrowserFileSystemProvider implements FileSystemProvider {
-
 	async *getDirectoryTree(
 		path: string = "/",
 		params: any = {},
