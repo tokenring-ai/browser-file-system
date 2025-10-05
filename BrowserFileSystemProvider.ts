@@ -1,4 +1,5 @@
 import { FileSystemService } from "@tokenring-ai/filesystem";
+import FileSystemProvider from "@tokenring-ai/filesystem/FileSystemProvider";
 
 // Simplified in-memory file structure - key is absolute path, value is { content }
 const mockFileSystem: Record<string, { content: string }> = {
@@ -15,13 +16,7 @@ const mockFileSystem: Record<string, { content: string }> = {
 	},
 };
 
-export default class BrowserFileSystem extends FileSystemService {
-	constructor(options: any = {}) {
-		super(options);
-		// Set name to "FileSystemService" for generic lookup by commands
-		// if they search for FileSystemService by name instead of type.
-		this.name = "FileSystemService" as any;
-	}
+export default class BrowserFileSystemProvider implements FileSystemProvider {
 
 	async *getDirectoryTree(
 		path: string = "/",
@@ -66,7 +61,7 @@ export default class BrowserFileSystem extends FileSystemService {
 		}
 	}
 
-	async getFile(filePath: string): Promise<string> {
+	async readFile(filePath: string): Promise<string> {
 		if (mockFileSystem[filePath]) {
 			return Promise.resolve(mockFileSystem[filePath].content || "");
 		}
