@@ -1,4 +1,4 @@
-import { AgentTeam, TokenRingPackage } from "@tokenring-ai/agent";
+import TokenRingApp, {TokenRingPlugin} from "@tokenring-ai/app";
 import {
 	FileSystemConfigSchema,
 	FileSystemService,
@@ -8,18 +8,18 @@ import BrowserFileSystemProvider from "./BrowserFileSystemProvider.ts";
 
 export { default as BrowserFileSystemProvider } from "./BrowserFileSystemProvider.ts";
 
-export const packageInfo: TokenRingPackage = {
+export default {
 	name: packageJSON.name,
 	version: packageJSON.version,
 	description: packageJSON.description,
-	install(agentTeam: AgentTeam) {
-		const filesystemConfig = agentTeam.getConfigSlice(
+	install(app: TokenRingApp) {
+		const filesystemConfig = app.getConfigSlice(
 			"filesystem",
 			FileSystemConfigSchema,
 		);
 
 		if (filesystemConfig) {
-			agentTeam.services
+			app.services
 				.waitForItemByType(FileSystemService)
 				.then((fileSystemService) => {
 					for (const name in filesystemConfig.providers) {
@@ -34,4 +34,4 @@ export const packageInfo: TokenRingPackage = {
 				});
 		}
 	},
-};
+} as TokenRingPlugin;
