@@ -3,6 +3,7 @@ import {
 	FileSystemConfigSchema,
 	FileSystemService,
 } from "@tokenring-ai/filesystem";
+import FileSystemProvider from "@tokenring-ai/filesystem/FileSystemProvider";
 import packageJSON from "./package.json" with { type: "json" };
 import BrowserFileSystemProvider from "./BrowserFileSystemProvider.ts";
 
@@ -27,7 +28,8 @@ export default {
 						if (provider.type === "browser") {
 							fileSystemService.registerFileSystemProvider(
 								name,
-								new BrowserFileSystemProvider(),
+                //TODO: BrowserFileSystemProvider is not a complete FileSystemProvider, we do this to supress type errors
+								new BrowserFileSystemProvider() as any as FileSystemProvider,
 							);
 						}
 					}
