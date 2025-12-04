@@ -21,8 +21,7 @@ export default {
 
 		if (filesystemConfig) {
 			app.services
-				.waitForItemByType(FileSystemService)
-				.then((fileSystemService) => {
+				.waitForItemByType(FileSystemService, (fileSystemService) => {
 					for (const name in filesystemConfig.providers) {
 						const provider = filesystemConfig.providers[name];
 						if (provider.type === "browser") {
