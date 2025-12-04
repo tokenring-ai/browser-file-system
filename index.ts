@@ -28,8 +28,7 @@ export default {
 						if (provider.type === "browser") {
 							fileSystemService.registerFileSystemProvider(
 								name,
-                //TODO: BrowserFileSystemProvider is not a complete FileSystemProvider, we do this to supress type errors
-								new BrowserFileSystemProvider() as any as FileSystemProvider,
+								new BrowserFileSystemProvider(),
 							);
 						}
 					}

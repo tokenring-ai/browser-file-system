@@ -1,5 +1,13 @@
 import { FileSystemService } from "@tokenring-ai/filesystem";
-import FileSystemProvider from "@tokenring-ai/filesystem/FileSystemProvider";
+import FileSystemProvider, {
+	StatLike,
+	GlobOptions,
+	WatchOptions,
+	ExecuteCommandOptions,
+	ExecuteCommandResult,
+	GrepOptions,
+	GrepResult,
+} from "@tokenring-ai/filesystem/FileSystemProvider";
 
 // Simplified in-memory file structure - key is absolute path, value is { content }
 const mockFileSystem: Record<string, { content: string }> = {
@@ -16,7 +24,7 @@ const mockFileSystem: Record<string, { content: string }> = {
 	},
 };
 
-export default class BrowserFileSystemProvider {
+export default class BrowserFileSystemProvider implements FileSystemProvider {
 	async *getDirectoryTree(
 		path: string = "/",
 		params: any = {},
@@ -59,34 +67,32 @@ export default class BrowserFileSystemProvider {
 			yield filePath;
 		}
 	}
+  async createDirectory(path: string, options?: { recursive?: boolean }): Promise<boolean> {
+    //noop
+    return true;
+  }
 
-	async readFile(filePath: string): Promise<string> {
+
+  async readFile(filePath: string): Promise<string> {
 		if (mockFileSystem[filePath]) {
 			return Promise.resolve(mockFileSystem[filePath].content || "");
 		}
 		throw new Error(`File not found: ${filePath}`);
 	}
+  async writeFile(
+    filePath: string,
+    content: string | Buffer,
+  ): Promise<boolean> {
+    mockFileSystem[filePath] = { content: content.toString("utf-8") };
+    return true;
+  }
 
-	async writeFile(
-		filePath: string,
-		content: string | Buffer,
-	): Promise<boolean> {
-		console.warn(
-			`BrowserFileSystemService: writeFile called for ${filePath}. This is a mock implementation.`,
-		);
-		const contentStr = Buffer.isBuffer(content)
-			? content.toString("utf-8")
-			: content;
-		if (mockFileSystem[filePath]) {
-			mockFileSystem[filePath].content = contentStr;
-			console.log(`Mock writeFile: ${filePath} updated in memory.`);
-			return Promise.resolve(true);
-		}
-		// Create new file if it doesn't exist
-		mockFileSystem[filePath] = { content: contentStr };
-		console.log(`Mock writeFile: ${filePath} created in memory.`);
-		return Promise.resolve(true);
-	}
+  async appendFile(filePath: string, content: string | Buffer): Promise<boolean> {
+    mockFileSystem[filePath] = {
+      content: (mockFileSystem[filePath].content ?? "") + content.toString("utf-8")
+    };
+    return true;
+  }
 
 	async deleteFile(filePath: string): Promise<never> {
 		console.warn(
@@ -150,5 +156,83 @@ export default class BrowserFileSystemProvider {
 
 		console.log(`Mock rename: ${oldPath} renamed to ${newPath} in memory.`);
 		return Promise.resolve(true);
+	}
+
+	async stat(filePath: string): Promise<StatLike> {
+		if (!mockFileSystem[filePath]) {
+			throw new Error(`Path ${filePath} does not exist`);
+		}
+		const content = mockFileSystem[filePath].content;
+		return {
+			path: filePath,
+			absolutePath: filePath,
+			isFile: true,
+			isDirectory: false,
+			isSymbolicLink: false,
+			size: content.length,
+			created: new Date(),
+			modified: new Date(),
+			accessed: new Date(),
+		};
+	}
+
+	async glob(pattern: string, options?: GlobOptions): Promise<string[]> {
+		const { ignoreFilter } = options || {};
+		const allFiles = Object.keys(mockFileSystem);
+		return allFiles.filter(file => !ignoreFilter || !ignoreFilter(file));
+	}
+
+	async watch(dir: string, options?: WatchOptions): Promise<any> {
+		console.warn("BrowserFileSystemProvider: watch not implemented");
+		return Promise.resolve(null);
+	}
+
+	async executeCommand(
+		command: string | string[],
+		options?: ExecuteCommandOptions,
+	): Promise<ExecuteCommandResult> {
+		console.warn("BrowserFileSystemProvider: executeCommand not implemented");
+		return {
+			ok: false,
+			stdout: "",
+			stderr: "Command execution not supported in browser",
+			exitCode: 1,
+			error: "Not implemented",
+		};
+	}
+
+	async grep(
+		searchString: string | string[],
+		options?: GrepOptions,
+	): Promise<GrepResult[]> {
+		const search = Array.isArray(searchString) ? searchString[0] : searchString;
+		const { ignoreFilter, includeContent } = options || {};
+		const { linesBefore = 0, linesAfter = 0 } = includeContent || {};
+		const results: GrepResult[] = [];
+
+		for (const [file, { content }] of Object.entries(mockFileSystem)) {
+			if (ignoreFilter && ignoreFilter(file)) continue;
+
+			const lines = content.split("\n");
+			for (let i = 0; i < lines.length; i++) {
+				if (lines[i].includes(search)) {
+					const start = Math.max(0, i - linesBefore);
+					const end = Math.min(lines.length - 1, i + linesAfter);
+					const contextContent = linesBefore > 0 || linesAfter > 0
+						? lines.slice(start, end + 1).join("\n")
+						: null;
+
+					results.push({
+						file,
+						line: i + 1,
+						match: lines[i],
+						matchedString: search,
+						content: contextContent,
+					});
+				}
+			}
+		}
+
+		return results;
 	}
 }
