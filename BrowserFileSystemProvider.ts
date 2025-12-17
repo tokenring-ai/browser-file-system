@@ -1,4 +1,3 @@
-import { FileSystemService } from "@tokenring-ai/filesystem";
 import FileSystemProvider, {
 	StatLike,
 	GlobOptions,

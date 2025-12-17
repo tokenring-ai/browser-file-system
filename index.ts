@@ -3,7 +3,6 @@ import {
 	FileSystemConfigSchema,
 	FileSystemService,
 } from "@tokenring-ai/filesystem";
-import FileSystemProvider from "@tokenring-ai/filesystem/FileSystemProvider";
 import packageJSON from "./package.json" with { type: "json" };
 import BrowserFileSystemProvider from "./BrowserFileSystemProvider.ts";
 
