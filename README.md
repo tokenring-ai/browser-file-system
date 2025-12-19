@@ -1,108 +1,267 @@
-# @token-ring/browser-file-system
+# @tokenring-ai/browser-file-system
 
-A lightweight, browser-friendly mock implementation of `FileSystemService` that operates entirely in memory. This package is useful for demos, tests, and UIs (like the web terminal) where direct access to a real file system is not available.
+A browser-based file system provider that implements the `FileSystemProvider` interface using in-memory mock data. This package provides a lightweight, browser-friendly file system abstraction for environments where direct access to the file system is not available, making it ideal for demos, tests, and UIs like web terminals.
 
-It exposes a small, opinionated subset of file system operations and ships with a built-in in-memory file map so you can explore directory trees and read files without any external setup.
+## Overview
 
-## What this package offers
-
-- BrowserFileSystemService
-  - Extends `@token-ring/filesystem`'s `FileSystemService`.
-  - Provides read-only-ish behavior with a few mocked write operations.
-  - Works with the Token Ring registry and other packages that consume a `FileSystemService`.
-
-### Implemented methods (mocked)
-
-- `async *getDirectoryTree(path = "/", { ig, recursive = true })`
-  - Yields file paths from the in-memory map, honoring `recursive` and optional ignore filter `ig(path) => boolean`.
-- `async getFile(filePath)`
-  - Returns the file content from memory or throws if missing.
-- `async writeFile(filePath, content)`
-  - Updates existing entries in memory and logs a warning. Throws if the path does not already exist. Intended for demo only.
-- `async deleteFile(filePath)`
-  - Not implemented; rejects with an error (read-only for now).
-- `async exists(filePath)`
-  - Returns true if the path exists in the in-memory map.
-- `async copy(source, destination, { overwrite } = {})`
-  - Copies content in memory; throws if destination exists and `overwrite` is not set.
-- `async rename(oldPath, newPath)`
-  - Moves an entry within the in-memory map; throws if conflicts occur.
-
-Note: Methods such as `glob`, `watch`, `stat`, `createDirectory`, `executeCommand`, `grep`, etc., are not implemented in this mock service.
+The `BrowserFileSystemProvider` extends the base `FileSystemProvider` interface and provides a comprehensive set of file system operations that work entirely in memory. It ships with a built-in mock file system containing sample files, allowing for immediate exploration without external setup.
 
 ## Installation
 
-This package is part of the Token Ring monorepo and is typically consumed via workspaces.
-
-- Name: `@token-ring/browser-file-system`
-- Version: `0.1.0`
-- Peer packages commonly used alongside:
-  - `@token-ring/filesystem`
-  - `@token-ring/registry`
-
-## Exports
-
-```ts
-import { BrowserFileSystemService, name, description, version } from "@token-ring/browser-file-system";
+```bash
+npm install @tokenring-ai/browser-file-system
 ```
 
-## Usage
+## Package Structure
 
-Register the service in a `ServiceRegistry` so other parts of the system that require a `FileSystemService` can find it.
+```
+pkg/browser-file-system/
+├── BrowserFileSystemProvider.ts  # Main provider implementation
+├── index.ts                      # Module exports
+├── plugin.ts                     # TokenRing plugin integration
+├── package.json                  # Package configuration
+├── vitest.config.ts             # Test configuration
+└── README.md                    # This file
+```
 
-```ts
-import { ServiceRegistry } from "@token-ring/registry";
-import { BrowserFileSystemService } from "@token-ring/browser-file-system";
+## Core Components
 
-const registry = new ServiceRegistry();
-await registry.start();
+### BrowserFileSystemProvider
 
-// Register the mock file system
-const fs = new BrowserFileSystemService();
-await registry.services.addServices(fs);
+The main class that implements the complete `FileSystemProvider` interface:
 
-// Directory tree (root)
-for await (const p of fs.getDirectoryTree("/", { recursive: true })) {
-  console.log(p);
+```typescript
+import { BrowserFileSystemProvider } from "@tokenring-ai/browser-file-system";
+
+const fileSystem = new BrowserFileSystemProvider();
+```
+
+### Mock File System Structure
+
+The provider includes built-in mock files for testing and demonstration:
+
+```typescript
+const mockFileSystem: Record<string, { content: string }> = {
+  "/README.md": {
+    content: "# Mock File System\n\nThis is a sample README file.",
+  },
+  "/src/index.js": { content: 'console.log("Hello from mock index.js");' },
+  "/src/components/Button.jsx": {
+    content: "const Button = () => <button>Click Me</button>;\nexport default Button;",
+  },
+  "/package.json": {
+    content: '{ "name": "mock-project", "version": "1.0.0" }',
+  },
+};
+```
+
+## Implemented Methods
+
+### File Operations
+
+- **`readFile(filePath: string): Promise<string>`**
+  - Reads file content from the in-memory file system
+  - Returns the file content as a string
+  - Throws error if file doesn't exist
+
+- **`writeFile(filePath: string, content: string | Buffer): Promise<boolean>`**
+  - Writes content to the in-memory file system
+  - Creates or updates files in the mock file system
+  - Always succeeds (returns true)
+
+- **`appendFile(filePath: string, content: string | Buffer): Promise<boolean>`**
+  - Appends content to existing files
+  - Creates file if it doesn't exist
+  - Returns true on success
+
+- **`deleteFile(filePath: string): Promise<never>`**
+  - Not implemented (read-only aspects for now)
+  - Logs warning and rejects with error
+
+### Directory Operations
+
+- **`getDirectoryTree(path?: string, params?): AsyncGenerator<string, void, unknown>`**
+  - Yields file paths from the directory tree
+  - Supports recursive and non-recursive traversal
+  - Respects ignore filter functions
+  - Normalizes paths for consistent handling
+
+- **`createDirectory(path: string, options?): Promise<boolean>`**
+  - No-op implementation (always returns true)
+  - Directory creation not applicable to in-memory system
+
+### File System Utilities
+
+- **`exists(filePath: string): Promise<boolean>`**
+  - Checks if a file exists in the mock file system
+  - Returns true if file exists, false otherwise
+
+- **`copy(source: string, destination: string, options?): Promise<boolean>`**
+  - Copies files within the in-memory file system
+  - Supports overwrite option
+  - Throws error if destination exists and overwrite not specified
+
+- **`rename(oldPath: string, newPath: string): Promise<boolean>`**
+  - Moves/renames files within the in-memory file system
+  - Throws error if new path already exists
+
+- **`stat(filePath: string): Promise<StatLike>`**
+  - Returns file statistics including size and timestamps
+  - Provides file metadata in standardized format
+
+### Advanced Operations
+
+- **`glob(pattern: string, options?): Promise<string[]>`**
+  - Returns files matching glob patterns
+  - Supports ignore filters
+  - Matches against all files in mock file system
+
+- **`grep(searchString: string, options?): Promise<GrepResult[]>`**
+  - Searches file contents for text patterns
+  - Supports context lines (before/after)
+  - Returns detailed match information
+
+- **`watch(dir: string, options?): Promise<any>`**
+  - Not implemented
+  - Logs warning and returns null
+
+- **`executeCommand(command: string | string[], options?): Promise<ExecuteCommandResult>`**
+  - Not implemented
+  - Returns error indicating command execution not supported
+
+## Usage Examples
+
+### Basic File System Operations
+
+```typescript
+import { BrowserFileSystemProvider } from "@tokenring-ai/browser-file-system";
+
+const fs = new BrowserFileSystemProvider();
+
+// Read a file
+const readmeContent = await fs.readFile("/README.md");
+console.log(readmeContent);
+
+// Check if file exists
+const hasPackageJson = await fs.exists("/package.json"); // true
+
+// Write a new file
+await fs.writeFile("/src/utils.js", "export const helper = () => 'Hello';");
+
+// Append to existing file
+await fs.appendFile("/README.md", "\n## Updated content\n");
+
+// Get directory tree
+console.log("Files in mock system:");
+for await (const filePath of fs.getDirectoryTree("/", { recursive: true })) {
+  console.log(filePath);
 }
-
-// Read a file that exists in the built-in map
-const readme = await fs.getFile("/README.md");
-console.log(readme);
-
-// Update existing file content (mock write)
-await fs.writeFile("/README.md", "# Updated in-memory README\n");
-
-// Copy and rename within the in-memory map
-await fs.copy("/package.json", "/package.copy.json", { overwrite: true });
-await fs.rename("/src/index.js", "/src/main.js");
 ```
 
-### Built-in mock files
+### Advanced Operations
 
-The service ships with a small in-memory map containing paths like:
+```typescript
+// Copy file with overwrite
+await fs.copy("/src/index.js", "/src/main.js", { overwrite: true });
 
-- `/README.md`
-- `/src/index.js`
-- `/src/components/Button.jsx`
-- `/package.json`
+// Rename file
+await fs.rename("/src/main.js", "/src/app.js");
 
-These are intended for quick exploration and UI demos.
+// Search file contents
+const searchResults = await fs.grep("console", {
+  includeContent: { linesBefore: 1, linesAfter: 1 }
+});
 
-## Notes and limitations
+// Get file statistics
+const stats = await fs.stat("/README.md");
+console.log(`File size: ${stats.size} bytes`);
+```
 
-- In-memory only: No persistence across reloads. Intended for demos/tests.
-- Partial API: Many advanced methods on `FileSystemService` are intentionally unimplemented.
-- Write semantics: `writeFile` updates only existing paths and logs a warning; `deleteFile` rejects.
-- Paths are absolute: The mock normalizes input and uses absolute-style paths ("/") internally.
+## TokenRing Plugin Integration
 
-## File map
+The package includes a TokenRing plugin for automatic service registration:
 
-- pkg/browser-file-system/index.js
-- pkg/browser-file-system/BrowserFileSystem.ts
-- pkg/browser-file-system/package.json
-- pkg/browser-file-system/README.md (this file)
+```typescript
+import TokenRingApp from "@tokenring-ai/app";
+import BrowserFileSystemPlugin from "@tokenring-ai/browser-file-system/plugin";
+
+// In your TokenRing application setup
+const app = new TokenRingApp();
+
+// The plugin automatically registers with the FileSystemService
+// when filesystem configuration includes browser providers
+```
+
+### Plugin Configuration
+
+The plugin integrates with the TokenRing configuration system:
+
+```typescript
+// Example configuration in your app
+const filesystemConfig = {
+  providers: {
+    browser: {
+      type: "browser"
+    }
+  }
+};
+```
+
+## Configuration
+
+The plugin automatically integrates with TokenRing's configuration system through the `FileSystemConfigSchema`. The browser file system provider is registered when the configuration specifies a `browser` type provider.
+
+## Dependencies
+
+- **@tokenring-ai/app**: Application framework and plugin system
+- **@tokenring-ai/filesystem**: Base file system provider interface
+
+## Limitations
+
+- **In-Memory Only**: No persistence across page reloads
+- **Browser Environment**: Designed for browser environments only
+- **Partial API**: Some advanced methods log warnings or throw errors
+- **Mock Data**: Limited to predefined mock files and directories
+- **No Command Execution**: `executeCommand` not supported in browser environment
+- **No File Watching**: `watch` functionality not implemented
+
+## Error Handling
+
+The provider implements comprehensive error handling:
+
+- **File Not Found**: Throws descriptive errors when files don't exist
+- **Path Conflicts**: Validates copy and rename operations
+- **Invalid Operations**: Logs warnings for unsupported operations
+- **Path Normalization**: Automatically normalizes paths for consistency
+
+## Development
+
+### Testing
+
+```bash
+# Run tests
+npm test
+
+# Linting
+npm run eslint
+```
+
+### Build
+
+The package uses TypeScript and is built as part of the TokenRing monorepo workspace system.
+
+## Version History
+
+- **0.2.0**: Current version with complete provider interface implementation
+- Complete TokenRing plugin integration
+- Enhanced error handling and path normalization
 
 ## License
 
 MIT
+
+## Related Packages
+
+- **@tokenring-ai/filesystem**: Base file system provider interface
+- **@tokenring-ai/local-filesystem**: Local file system implementation
+- **@tokenring-ai/app**: TokenRing application framework
