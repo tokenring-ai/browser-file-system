@@ -66,32 +66,41 @@ export default class BrowserFileSystemProvider implements FileSystemProvider {
 			yield filePath;
 		}
 	}
-  async createDirectory(path: string, options?: { recursive?: boolean }): Promise<boolean> {
-    //noop
-    return true;
-  }
+	
+	async createDirectory(path: string, options?: { recursive?: boolean }): Promise<boolean> {
+		//noop
+		return true;
+	}
 
-
-  async readFile(filePath: string): Promise<string> {
+	async readFile(filePath: string): Promise<string> {
 		if (mockFileSystem[filePath]) {
 			return Promise.resolve(mockFileSystem[filePath].content || "");
 		}
 		throw new Error(`File not found: ${filePath}`);
 	}
-  async writeFile(
-    filePath: string,
-    content: string | Buffer,
-  ): Promise<boolean> {
-    mockFileSystem[filePath] = { content: content.toString("utf-8") };
-    return true;
-  }
+	
+	async writeFile(
+		filePath: string,
+		content: string | Buffer,
+	): Promise<boolean> {
+		mockFileSystem[filePath] = { content: content.toString("utf-8") };
+		return true;
+	}
 
-  async appendFile(filePath: string, content: string | Buffer): Promise<boolean> {
-    mockFileSystem[filePath] = {
-      content: (mockFileSystem[filePath].content ?? "") + content.toString("utf-8")
-    };
-    return true;
-  }
+	async appendFile(filePath: string, content: string | Buffer): Promise<boolean> {
+		const contentStr = content.toString("utf-8");
+		
+		// If file doesn't exist, create it with the content
+		if (!mockFileSystem[filePath]) {
+			mockFileSystem[filePath] = { content: contentStr };
+		} else {
+			// If file exists, append the content
+			mockFileSystem[filePath] = {
+				content: (mockFileSystem[filePath].content || "") + contentStr
+			};
+		}
+		return true;
+	}
 
 	async deleteFile(filePath: string): Promise<never> {
 		console.warn(
