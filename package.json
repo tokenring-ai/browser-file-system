@@ -10,6 +10,18 @@
   "main": "index.ts",
   "type": "module",
   "scripts": {
-    "eslint": "eslint --fix ./"
+    "eslint": "eslint --fix ./",
+    "test": "vitest run",
+    "build": "tsc --noEmit",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "vitest": "catalog:",
+    "typescript": "catalog:"
+  },
+  "exports": {
+    ".": "./index.ts",
+    "./*": "./*.ts"
   }
 }
