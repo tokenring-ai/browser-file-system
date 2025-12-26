@@ -1,27 +1,23 @@
-import TokenRingApp, {TokenRingPlugin} from "@tokenring-ai/app";
-import {
-	FileSystemConfigSchema,
-	FileSystemService,
-} from "@tokenring-ai/filesystem";
-import packageJSON from "./package.json" with { type: "json" };
+import {TokenRingPlugin} from "@tokenring-ai/app";
+import {FileSystemConfigSchema, FileSystemService,} from "@tokenring-ai/filesystem";
+import {z} from "zod";
 import BrowserFileSystemProvider from "./BrowserFileSystemProvider.ts";
+import packageJSON from "./package.json" with {type: "json"};
 
+const packageConfigSchema = z.object({
+  filesystem: FileSystemConfigSchema
+});
 
 export default {
 	name: packageJSON.name,
 	version: packageJSON.version,
 	description: packageJSON.description,
-	install(app: TokenRingApp) {
-		const filesystemConfig = app.getConfigSlice(
-			"filesystem",
-			FileSystemConfigSchema,
-		);
-
-		if (filesystemConfig) {
+  install(app, config) {
+    if (config.filesystem) {
 			app.services
 				.waitForItemByType(FileSystemService, (fileSystemService) => {
-					for (const name in filesystemConfig.providers) {
-						const provider = filesystemConfig.providers[name];
+          for (const name in config.filesystem.providers) {
+            const provider = config.filesystem.providers[name];
 						if (provider.type === "browser") {
 							fileSystemService.registerFileSystemProvider(
 								name,
@@ -32,4 +28,5 @@ export default {
 				});
 		}
 	},
-} satisfies TokenRingPlugin;
+  config: packageConfigSchema
+} satisfies TokenRingPlugin<typeof packageConfigSchema>;
