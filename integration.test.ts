@@ -222,7 +222,11 @@ describe("Integration Tests", () => {
       expect(plugin.name).toBe("@tokenring-ai/browser-file-system");
       
       // Test installation
-      plugin.install(mockApp);
+      plugin.install(mockApp,{ filesystem: {
+        providers: {
+          browser: { type: "browser" }
+        }
+      }});
       
       // Plugin should have registered the provider
       expect(waitForItemByTypeSpy).toHaveBeenCalled();
