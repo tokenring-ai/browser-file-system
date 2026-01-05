@@ -72,11 +72,11 @@ export default class BrowserFileSystemProvider implements FileSystemProvider {
 		return true;
 	}
 
-	async readFile(filePath: string): Promise<string> {
+	async readFile(filePath: string): Promise<Buffer|null> {
 		if (mockFileSystem[filePath]) {
-			return Promise.resolve(mockFileSystem[filePath].content || "");
+			return Buffer.from(mockFileSystem[filePath].content || "");
 		}
-		throw new Error(`File not found: ${filePath}`);
+    return null;
 	}
 	
 	async writeFile(
