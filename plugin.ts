@@ -1,5 +1,6 @@
 import {TokenRingPlugin} from "@tokenring-ai/app";
-import {FileSystemConfigSchema, FileSystemService,} from "@tokenring-ai/filesystem";
+import {FileSystemService} from "@tokenring-ai/filesystem";
+import {FileSystemConfigSchema} from "@tokenring-ai/filesystem/schema";
 import {z} from "zod";
 import BrowserFileSystemProvider from "./BrowserFileSystemProvider.ts";
 import packageJSON from "./package.json" with {type: "json"};
