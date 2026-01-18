@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
 import BrowserFileSystemProvider from "./BrowserFileSystemProvider";
 
 // Mock the console methods to suppress warnings during tests

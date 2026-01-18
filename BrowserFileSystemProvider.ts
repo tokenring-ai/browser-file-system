@@ -1,11 +1,11 @@
 import FileSystemProvider, {
-	StatLike,
-	GlobOptions,
-	WatchOptions,
-	ExecuteCommandOptions,
-	ExecuteCommandResult,
-	GrepOptions,
-	GrepResult,
+  ExecuteCommandOptions,
+  ExecuteCommandResult,
+  GlobOptions,
+  GrepOptions,
+  GrepResult,
+  StatLike,
+  WatchOptions,
 } from "@tokenring-ai/filesystem/FileSystemProvider";
 
 // Simplified in-memory file structure - key is absolute path, value is { content }
