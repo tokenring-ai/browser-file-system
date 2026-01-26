@@ -168,10 +168,15 @@ export default class BrowserFileSystemProvider implements FileSystemProvider {
 
 	async stat(filePath: string): Promise<StatLike> {
 		if (!mockFileSystem[filePath]) {
-			throw new Error(`Path ${filePath} does not exist`);
+      return {
+        exists: false,
+        path: filePath,
+      }
 		}
+
 		const content = mockFileSystem[filePath].content;
 		return {
+      exists: true,
 			path: filePath,
 			absolutePath: filePath,
 			isFile: true,
