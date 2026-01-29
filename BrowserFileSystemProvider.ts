@@ -1,6 +1,4 @@
 import FileSystemProvider, {
-  ExecuteCommandOptions,
-  ExecuteCommandResult,
   GlobOptions,
   GrepOptions,
   GrepResult,
@@ -198,20 +196,6 @@ export default class BrowserFileSystemProvider implements FileSystemProvider {
 	async watch(dir: string, options?: WatchOptions): Promise<any> {
 		console.warn("BrowserFileSystemProvider: watch not implemented");
 		return Promise.resolve(null);
-	}
-
-	async executeCommand(
-		command: string | string[],
-		options?: ExecuteCommandOptions,
-	): Promise<ExecuteCommandResult> {
-		console.warn("BrowserFileSystemProvider: executeCommand not implemented");
-		return {
-			ok: false,
-			stdout: "",
-			stderr: "Command execution not supported in browser",
-			exitCode: 1,
-			error: "Not implemented",
-		};
 	}
 
 	async grep(
