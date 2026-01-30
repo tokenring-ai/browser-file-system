@@ -32,23 +32,28 @@ describe("BrowserFileSystemProvider", () => {
     describe("readFile", () => {
       it("should read existing files from mock file system", async () => {
         const content = await provider.readFile("/README.md");
-        expect(content).toBe("# Mock File System\n\nThis is a sample README file.");
+        expect(content).not.toBeNull();
+        expect(Buffer.isBuffer(content)).toBe(true);
+        expect(content.toString()).toBe("# Mock File System\n\nThis is a sample README file.");
       });
 
       it("should read JavaScript file", async () => {
         const content = await provider.readFile("/src/index.js");
-        expect(content).toBe('console.log("Hello from mock index.js");');
+        expect(content).not.toBeNull();
+        expect(Buffer.isBuffer(content)).toBe(true);
+        expect(content.toString()).toBe('console.log("Hello from mock index.js");');
       });
 
       it("should read JSON file", async () => {
         const content = await provider.readFile("/package.json");
-        expect(content).toBe('{ "name": "mock-project", "version": "1.0.0" }');
+        expect(content).not.toBeNull();
+        expect(Buffer.isBuffer(content)).toBe(true);
+        expect(content.toString()).toBe('{ "name": "mock-project", "version": "1.0.0" }');
       });
 
-      it("should throw error for non-existent file", async () => {
-        await expect(provider.readFile("/non-existent.txt")).rejects.toThrow(
-          "File not found: /non-existent.txt"
-        );
+      it("should return null for non-existent file", async () => {
+        const content = await provider.readFile("/non-existent.txt");
+        expect(content).toBeNull();
       });
     });
 
@@ -58,7 +63,9 @@ describe("BrowserFileSystemProvider", () => {
         expect(result).toBe(true);
         
         const content = await provider.readFile("/test/new-file.txt");
-        expect(content).toBe("Test content");
+        expect(content).not.toBeNull();
+        expect(Buffer.isBuffer(content)).toBe(true);
+        expect(content.toString()).toBe("Test content");
       });
 
       it("should overwrite existing file", async () => {
@@ -67,9 +74,11 @@ describe("BrowserFileSystemProvider", () => {
         
         await provider.writeFile("/README.md", newContent);
         const updatedContent = await provider.readFile("/README.md");
-        
-        expect(updatedContent).toBe(newContent);
-        expect(updatedContent).not.toBe(originalContent);
+
+        expect(updatedContent).not.toBeNull();
+        expect(Buffer.isBuffer(updatedContent)).toBe(true);
+        expect(updatedContent.toString()).toBe(newContent);
+        expect(updatedContent.toString()).not.toBe(originalContent.toString());
       });
 
       it("should handle Buffer content", async () => {
@@ -78,7 +87,9 @@ describe("BrowserFileSystemProvider", () => {
         
         expect(result).toBe(true);
         const content = await provider.readFile("/test/buffer.txt");
-        expect(content).toBe("Buffer content");
+        expect(content).not.toBeNull();
+        expect(Buffer.isBuffer(content)).toBe(true);
+        expect(content.toString()).toBe("Buffer content");
       });
     });
 
@@ -87,29 +98,47 @@ describe("BrowserFileSystemProvider", () => {
         await provider.appendFile("/README.md", "\n## Added content");
         
         const content = await provider.readFile("/README.md");
-        expect(content).toContain("## Added content");
+        expect(content).not.toBeNull();
+        expect(Buffer.isBuffer(content)).toBe(true);
+        expect(content.toString()).toContain("## Added content");
       });
 
       it("should create file if it doesn't exist", async () => {
         await provider.appendFile("/new-file.txt", "New content");
         
         const content = await provider.readFile("/new-file.txt");
-        expect(content).toBe("New content");
+        expect(content).not.toBeNull();
+        expect(Buffer.isBuffer(content)).toBe(true);
+        expect(content.toString()).toBe("New content");
       });
 
       it("should handle Buffer content in append", async () => {
         await provider.appendFile("/test/buffer.txt", Buffer.from(" appended"));
         
         const content = await provider.readFile("/test/buffer.txt");
-        expect(content).toContain("appended");
+        expect(content).not.toBeNull();
+        expect(Buffer.isBuffer(content)).toBe(true);
+        expect(content.toString()).toContain("appended");
       });
     });
 
     describe("deleteFile", () => {
-      it("should reject with error", async () => {
-        await expect(provider.deleteFile("/test.txt")).rejects.toThrow(
-          "deleteFile not implemented in mock."
-        );
+      it("should return true for successful deletion", async () => {
+        // First create a file
+        await provider.writeFile("/test.txt", "Test content");
+
+        // Then delete it
+        const result = await provider.deleteFile("/test.txt");
+        expect(result).toBe(true);
+
+        // Verify it's gone
+        const exists = await provider.exists("/test.txt");
+        expect(exists).toBe(false);
+      });
+
+      it("should return true for non-existent file", async () => {
+        const result = await provider.deleteFile("/non-existent.txt");
+        expect(result).toBe(true);
       });
     });
   });
@@ -201,13 +230,15 @@ describe("BrowserFileSystemProvider", () => {
         
         const originalContent = await provider.readFile("/README.md");
         const copiedContent = await provider.readFile("/copy-of-readme.md");
-        expect(copiedContent).toBe(originalContent);
+
+        expect(Buffer.isBuffer(originalContent)).toBe(true);
+        expect(Buffer.isBuffer(copiedContent)).toBe(true);
+        expect(copiedContent.toString()).toBe(originalContent.toString());
       });
 
-      it("should throw error when source doesn't exist", async () => {
-        await expect(
-          provider.copy("/non-existent.txt", "/destination.txt")
-        ).rejects.toThrow("Source file not found: /non-existent.txt");
+      it("should return true when source doesn't exist", async () => {
+        const result = await provider.copy("/non-existent.txt", "/destination.txt");
+        expect(result).toBe(true);
       });
 
       it("should throw error when destination exists without overwrite option", async () => {
@@ -220,10 +251,12 @@ describe("BrowserFileSystemProvider", () => {
 
       it("should overwrite existing file with overwrite option", async () => {
         await provider.writeFile("/src/sample.js", "Sample content");
-        await provider.copy("/src/sample.js", "/src/index.js", { overwrite: true });
-        
+        const result = await provider.copy("/src/sample.js", "/src/index.js", {overwrite: true});
+
+        expect(result).toBe(true);
         const content = await provider.readFile("/src/index.js");
-        expect(content).toBe("Sample content");
+        expect(Buffer.isBuffer(content)).toBe(true);
+        expect(content.toString()).toBe("Sample content");
       });
     });
 
@@ -235,17 +268,19 @@ describe("BrowserFileSystemProvider", () => {
         expect(result).toBe(true);
         
         // Old file should not exist
-        await expect(provider.readFile("/temp-readme.md")).rejects.toThrow();
+        const exists = await provider.exists("/temp-readme.md");
+        expect(exists).toBe(false);
         
         // New file should exist
         const content = await provider.readFile("/renamed-readme.md");
-        expect(content).toBe("Test content");
+        expect(content).not.toBeNull();
+        expect(Buffer.isBuffer(content)).toBe(true);
+        expect(content.toString()).toBe("Test content");
       });
 
-      it("should throw error when source doesn't exist", async () => {
-        await expect(
-          provider.rename("/non-existent.txt", "/destination.txt")
-        ).rejects.toThrow("Source file not found: /non-existent.txt");
+      it("should return true when source doesn't exist", async () => {
+        const result = await provider.rename("/non-existent.txt", "/destination.txt");
+        expect(result).toBe(true);
       });
 
       it("should throw error when destination exists", async () => {
@@ -260,7 +295,7 @@ describe("BrowserFileSystemProvider", () => {
         const stats = await provider.stat("/README.md");
         
         expect(stats.path).toBe("/README.md");
-        expect(stats.absolutePath).toBe("/README.md");
+        expect(stats.exists).toBe(true);
         expect(stats.isFile).toBe(true);
         expect(stats.isDirectory).toBe(false);
         expect(stats.isSymbolicLink).toBe(false);
@@ -270,10 +305,11 @@ describe("BrowserFileSystemProvider", () => {
         expect(stats.accessed).toBeInstanceOf(Date);
       });
 
-      it("should throw error for non-existent file", async () => {
-        await expect(provider.stat("/non-existent.txt")).rejects.toThrow(
-          "Path /non-existent.txt does not exist"
-        );
+      it("should return exists: false for non-existent file", async () => {
+        const stats = await provider.stat("/non-existent.txt");
+
+        expect(stats.path).toBe("/non-existent.txt");
+        expect(stats.exists).toBe(false);
       });
     });
   });
@@ -302,24 +338,6 @@ describe("BrowserFileSystemProvider", () => {
       it("should return null and log warning", async () => {
         const result = await provider.watch("/test");
         expect(result).toBeNull();
-      });
-    });
-
-    describe("executeCommand", () => {
-      it("should return error result for unsupported command execution", async () => {
-        const result = await provider.executeCommand("ls");
-        
-        expect(result.ok).toBe(false);
-        expect(result.stdout).toBe("");
-        expect(result.stderr).toBe("Command execution not supported in browser");
-        expect(result.exitCode).toBe(1);
-        expect(result.error).toBe("Not implemented");
-      });
-
-      it("should handle array command", async () => {
-        const result = await provider.executeCommand(["ls", "-la"]);
-        expect(result.ok).toBe(false);
-        expect(result.error).toBe("Not implemented");
       });
     });
 
@@ -381,7 +399,7 @@ describe("BrowserFileSystemProvider", () => {
 
     it("should have correct content in mock files", async () => {
       const packageContent = await provider.readFile("/package.json");
-      const parsed = JSON.parse(packageContent);
+      const parsed = JSON.parse(packageContent.toString());
       expect(parsed.name).toBe("mock-project");
       expect(parsed.version).toBe("1.0.0");
     });

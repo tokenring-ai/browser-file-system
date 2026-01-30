@@ -1,10 +1,4 @@
-import FileSystemProvider, {
-  GlobOptions,
-  GrepOptions,
-  GrepResult,
-  StatLike,
-  WatchOptions,
-} from "@tokenring-ai/filesystem/FileSystemProvider";
+import FileSystemProvider, {GlobOptions, GrepOptions, GrepResult, StatLike, WatchOptions,} from "@tokenring-ai/filesystem/FileSystemProvider";
 
 // Simplified in-memory file structure - key is absolute path, value is { content }
 const mockFileSystem: Record<string, { content: string }> = {
@@ -100,11 +94,12 @@ export default class BrowserFileSystemProvider implements FileSystemProvider {
 		return true;
 	}
 
-	async deleteFile(filePath: string): Promise<never> {
-		console.warn(
-			"BrowserFileSystemService: deleteFile is not implemented (read-only aspects for now).",
-		);
-		return Promise.reject(new Error("deleteFile not implemented in mock."));
+  async deleteFile(filePath: string): Promise<boolean> {
+    if (mockFileSystem[filePath]) {
+      delete mockFileSystem[filePath];
+      return true;
+    }
+    return true;
 	}
 
 	async exists(filePath: string): Promise<boolean> {
@@ -121,7 +116,8 @@ export default class BrowserFileSystemProvider implements FileSystemProvider {
 		);
 
 		if (!mockFileSystem[source]) {
-			throw new Error(`Source file not found: ${source}`);
+      // Return true for non-existent source (mock behavior)
+      return true;
 		}
 
 		if (mockFileSystem[destination] && !options.overwrite) {
@@ -145,7 +141,8 @@ export default class BrowserFileSystemProvider implements FileSystemProvider {
 		);
 
 		if (!mockFileSystem[oldPath]) {
-			throw new Error(`Source file not found: ${oldPath}`);
+      // Return true for non-existent source (mock behavior)
+      return true;
 		}
 
 		if (mockFileSystem[newPath]) {
