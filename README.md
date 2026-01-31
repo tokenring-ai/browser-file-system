@@ -1,6 +1,6 @@
 # @tokenring-ai/browser-file-system
 
-A browser-based file system provider that implements the `FileSystemProvider` interface using in-memory mock data. This package provides a lightweight, browser-friendly file system abstraction for environments where direct access to the file system is not available, making it ideal for demos, tests, and UIs like web terminals.
+A browser-based file system provider that implements the `FileSystemProvider` interface using in-memory mock data. This package provides a lightweight, browser-friendly file system abstraction for environments where direct access to the file system is not available, making it ideal for demos, tests, and web-based interfaces like web terminals.
 
 ## Overview
 
@@ -17,6 +17,7 @@ The `BrowserFileSystemProvider` implements the complete `FileSystemProvider` int
 - TokenRing plugin integration for automatic service registration
 - Comprehensive error handling with descriptive messages
 - Support for ignore filters in directory traversal and search
+- Path normalization for consistent path handling
 
 ## Installation
 
@@ -121,22 +122,87 @@ console.log(`File size: ${stats.size} bytes`);
 const files = await fs.glob("**/*.js", {
   ignoreFilter: (path) => path.includes('test')
 });
-console.log(files); // Returns all non-test files
+console(files); // Returns all non-test files
 ```
 
 ### Plugin Configuration
 
-The plugin integrates with the TokenRing configuration system:
+The plugin integrates with the TokenRing configuration system and FileSystemService:
 
 ```typescript
-// Example configuration in your app
+// Example configuration in your TokenRing app
 const filesystemConfig = {
-  providers: {
-    browser: {
-      type: "browser"
+  filesystem: {
+    providers: {
+      browser: {
+        type: "browser"
+      }
     }
   }
 };
+```
+
+The plugin registers the `BrowserFileSystemProvider` as a file system provider with the FileSystemService when configured with `type: "browser"`.
+
+## Services
+
+### FileSystemService Integration
+
+This package integrates with the `FileSystemService` from `@tokenring-ai/filesystem`. The provider is automatically registered when the plugin is loaded with the appropriate configuration.
+
+### Provider Methods
+
+All methods return `Promise<boolean>` or specific return types defined in the FileSystemProvider interface:
+
+- **getDirectoryTree** - Async generator for directory traversal
+- **createDirectory** - Creates a directory (no-op in mock)
+- **readFile** - Reads file content
+- **writeFile** - Writes file content
+- **appendFile** - Appends content to file
+- **deleteFile** - Deletes a file
+- **exists** - Checks if file exists
+- **copy** - Copies file with overwrite option
+- **rename** - Renames/moves a file
+- **stat** - Gets file statistics
+- **glob** - Matches files with ignore filter
+- **watch** - Watches for file changes (not implemented)
+- **grep** - Searches file contents with context
+
+## Configuration
+
+### Plugin Configuration Schema
+
+The plugin configuration uses the `FileSystemConfigSchema` from `@tokenring-ai/filesystem`:
+
+```typescript
+import { FileSystemConfigSchema } from "@tokenring-ai/filesystem/schema";
+import { z } from "zod";
+
+const packageConfigSchema = z.object({
+  filesystem: FileSystemConfigSchema
+});
+
+// Example configuration
+const config = {
+  filesystem: {
+    providers: {
+      browser: {
+        type: "browser"
+      }
+    }
+  }
+};
+```
+
+### Provider Configuration
+
+The provider configuration is handled through the FileSystemService's provider configuration. When registering, the provider type must be set to `"browser"`:
+
+```typescript
+fileSystemService.registerFileSystemProvider(
+  "browser",
+  new BrowserFileSystemProvider()
+);
 ```
 
 ## Limitations
@@ -168,7 +234,17 @@ bun test:coverage
 
 # Run tests in watch mode
 bun test:watch
+
+# Run tests with specific test file
+bun test BrowserFileSystemProvider.test.ts
 ```
+
+## Dependencies
+
+This package depends on:
+
+- `@tokenring-ai/app` - Core application framework and plugin system
+- `@tokenring-ai/filesystem` - File system service and provider interface
 
 ## License
 
