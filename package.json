@@ -4,7 +4,8 @@
   "version": "0.2.0",
   "dependencies": {
     "@tokenring-ai/app": "0.2.0",
-    "@tokenring-ai/filesystem": "0.2.0"
+    "@tokenring-ai/filesystem": "0.2.0",
+    "zod": "^4.3.6"
   },
   "license": "MIT",
   "main": "index.ts",
