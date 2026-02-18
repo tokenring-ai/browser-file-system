@@ -18,11 +18,12 @@ The `BrowserFileSystemProvider` implements the complete `FileSystemProvider` int
 - Comprehensive error handling with descriptive messages
 - Support for ignore filters in directory traversal and search
 - Path normalization for consistent path handling
+- Comprehensive test coverage
 
 ## Installation
 
 ```bash
-npm install @tokenring-ai/browser-file-system
+bun install @tokenring-ai/browser-file-system
 ```
 
 ## Package Structure
@@ -63,7 +64,8 @@ const mockFileSystem: Record<string, { content: string }> = {
   },
   "/src/index.js": { content: 'console.log("Hello from mock index.js");' },
   "/src/components/Button.jsx": {
-    content: "const Button = () => <button>Click Me</button>;\nexport default Button;",
+    content:
+      "const Button = () => <button>Click Me</button>;\nexport default Button;",
   },
   "/package.json": {
     content: '{ "name": "mock-project", "version": "1.0.0" }',
@@ -82,7 +84,7 @@ const fs = new BrowserFileSystemProvider();
 
 // Read a file
 const readmeContent = await fs.readFile("/README.md");
-console.log(readmeContent);
+console.log(readmeContent.toString("utf-8"));
 
 // Check if file exists
 const hasPackageJson = await fs.exists("/package.json"); // true
@@ -122,7 +124,7 @@ console.log(`File size: ${stats.size} bytes`);
 const files = await fs.glob("**/*.js", {
   ignoreFilter: (path) => path.includes('test')
 });
-console(files); // Returns all non-test files
+console.log(files); // Returns all non-test files
 ```
 
 ### Plugin Configuration
@@ -142,19 +144,88 @@ const filesystemConfig = {
 };
 ```
 
-The plugin registers the `BrowserFileSystemProvider` as a file system provider with the FileSystemService when configured with `type: "browser"`.
+The plugin automatically registers the `BrowserFileSystemProvider` as a file system provider with the FileSystemService when configured with `type: "browser"`.
 
-## Services
+## Plugin Configuration
 
-### FileSystemService Integration
+### Configuration Schema
 
-This package integrates with the `FileSystemService` from `@tokenring-ai/filesystem`. The provider is automatically registered when the plugin is loaded with the appropriate configuration.
+The plugin configuration uses the `FileSystemConfigSchema` from `@tokenring-ai/filesystem`:
+
+```typescript
+import { FileSystemConfigSchema } from "@tokenring-ai/filesystem/schema";
+import { z } from "zod";
+
+const packageConfigSchema = z.object({
+  filesystem: FileSystemConfigSchema
+});
+
+// Example configuration
+const config = {
+  filesystem: {
+    providers: {
+      browser: {
+        type: "browser"
+      }
+    }
+  }
+};
+```
+
+## Provider
+
+### Provider Interface
+
+The package implements the `FileSystemProvider` interface from `@tokenring-ai/filesystem`:
+
+```typescript
+interface FileSystemProvider {
+  getDirectoryTree(
+    path: string,
+    params?: DirectoryTreeOptions,
+  ): AsyncGenerator<string>;
+
+  createDirectory(
+    path: string,
+    options?: { recursive?: boolean }
+  ): Promise<boolean>;
+
+  readFile(filePath: string): Promise<Buffer|null>;
+
+  writeFile(filePath: string, content: string | Buffer): Promise<boolean>;
+
+  appendFile(filePath: string, content: string | Buffer): Promise<boolean>;
+
+  deleteFile(filePath: string): Promise<boolean>;
+
+  exists(filePath: string): Promise<boolean>;
+
+  copy(
+    source: string,
+    destination: string,
+    options?: { overwrite?: boolean }
+  ): Promise<boolean>;
+
+  rename(oldPath: string, newPath: string): Promise<boolean>;
+
+  stat(filePath: string): Promise<StatLike>;
+
+  glob(pattern: string, options?: GlobOptions): Promise<string[]>;
+
+  watch(dir: string, options?: WatchOptions): Promise<any>;
+
+  grep(
+    searchString: string | string[],
+    options?: GrepOptions,
+  ): Promise<GrepResult[]>;
+}
+```
 
 ### Provider Methods
 
 All methods return `Promise<boolean>` or specific return types defined in the FileSystemProvider interface:
 
-- **getDirectoryTree** - Async generator for directory traversal
+- **getDirectoryTree** - Async generator for directory traversal with `ig` (ignore filter) and `recursive` options
 - **createDirectory** - Creates a directory (no-op in mock)
 - **readFile** - Reads file content
 - **writeFile** - Writes file content
@@ -167,6 +238,33 @@ All methods return `Promise<boolean>` or specific return types defined in the Fi
 - **glob** - Matches files with ignore filter
 - **watch** - Watches for file changes (not implemented)
 - **grep** - Searches file contents with context
+
+### Provider Registration
+
+The provider is automatically registered through the plugin when the filesystem configuration includes a provider with `type: "browser"`.
+
+#### Plugin Registration
+
+```typescript
+// In your TokenRing app configuration
+const config = {
+  filesystem: {
+    providers: {
+      browser: {
+        type: "browser"
+      }
+    }
+  }
+};
+
+// The plugin will automatically register the provider
+```
+
+## Services
+
+### FileSystemService Integration
+
+This package integrates with the `FileSystemService` from `@tokenring-ai/filesystem`. The provider is automatically registered when the plugin is loaded with the appropriate configuration.
 
 ## Configuration
 
@@ -196,14 +294,7 @@ const config = {
 
 ### Provider Configuration
 
-The provider configuration is handled through the FileSystemService's provider configuration. When registering, the provider type must be set to `"browser"`:
-
-```typescript
-fileSystemService.registerFileSystemProvider(
-  "browser",
-  new BrowserFileSystemProvider()
-);
-```
+The provider configuration is handled through the FileSystemService's provider configuration. When registering, the provider type must be set to `"browser"`.
 
 ## Limitations
 
@@ -211,14 +302,13 @@ fileSystemService.registerFileSystemProvider(
 - **Browser Environment**: Designed for browser environments only
 - **Partial API**: Some advanced methods log warnings or throw errors
 - **Mock Data**: Limited to predefined mock files and directories
-- **No Command Execution**: `executeCommand` not supported in browser environment
 - **No File Watching**: `watch` functionality not implemented
 
 ## Error Handling
 
 The provider implements comprehensive error handling:
 
-- **File Not Found**: Throws descriptive errors when files don't exist
+- **File Not Found**: Returns `null` for missing files in `readFile`
 - **Path Conflicts**: Validates copy and rename operations
 - **Invalid Operations**: Logs warnings for unsupported operations
 - **Path Normalization**: Automatically normalizes paths for consistency
@@ -239,13 +329,6 @@ bun test:watch
 bun test BrowserFileSystemProvider.test.ts
 ```
 
-## Dependencies
-
-This package depends on:
-
-- `@tokenring-ai/app` - Core application framework and plugin system
-- `@tokenring-ai/filesystem` - File system service and provider interface
-
 ## License
 
-MIT License - see [LICENSE](./LICENSE) file for details.
+MIT License - see LICENSE file for details.
