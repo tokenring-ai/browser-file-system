@@ -165,9 +165,9 @@ console.log(copyResult); // true (mock behavior)
 
 ## Provider API
 
-### BrowserFileSystemProvider Methods
+The provider implements the `FileSystemProvider` interface from `@tokenring-ai/filesystem`.
 
-The provider implements the `FileSystemProvider` interface from `@tokenring-ai/filesystem`:
+### BrowserFileSystemProvider Methods
 
 #### getDirectoryTree
 
@@ -176,17 +176,23 @@ Returns an async generator that yields file paths in a directory tree.
 ```typescript
 async *getDirectoryTree(
   path: string = "/",
-  params?: {
-    ig?: (path: string) => boolean;
-    recursive?: boolean;
-  }
+  params: any = {}
 ): AsyncGenerator<string, void, unknown>
 ```
 
-- **path**: Directory path to list (default: "/")
-- **params.recursive**: Whether to include subdirectories (default: true)
-- **params.ig**: Optional ignore filter function
-- **Returns**: Async generator yielding file paths
+**Parameters:**
+- `path`: Directory path to list (default: `"/"`)
+- `params.recursive`: Whether to include subdirectories (default: `true`)
+- `params.ig`: Optional ignore filter function `(path: string) => boolean`
+
+**Returns:** Async generator yielding file paths
+
+**Example:**
+```typescript
+for await (const filePath of fs.getDirectoryTree("/src", { recursive: true })) {
+  console.log(filePath);
+}
+```
 
 #### createDirectory
 
@@ -199,7 +205,16 @@ async createDirectory(
 ): Promise<boolean>
 ```
 
-- **Returns**: Always returns `true`
+**Parameters:**
+- `path`: Directory path to create
+- `options.recursive`: Whether to create parent directories (default: `false`)
+
+**Returns:** Always returns `true`
+
+**Example:**
+```typescript
+await fs.createDirectory("/new/dir", { recursive: true });
+```
 
 #### readFile
 
@@ -209,7 +224,18 @@ Reads file content from the file system.
 async readFile(filePath: string): Promise<Buffer | null>
 ```
 
-- **Returns**: File content as Buffer or `null` if file doesn't exist
+**Parameters:**
+- `filePath`: Path to the file to read
+
+**Returns:** File content as Buffer or `null` if file doesn't exist
+
+**Example:**
+```typescript
+const content = await fs.readFile("/README.md");
+if (content) {
+  console.log(content.toString("utf-8"));
+}
+```
 
 #### writeFile
 
@@ -222,7 +248,17 @@ async writeFile(
 ): Promise<boolean>
 ```
 
-- **Returns**: Always returns `true`
+**Parameters:**
+- `filePath`: Path to the file to write
+- `content`: Content to write (string or Buffer)
+
+**Returns:** Always returns `true`
+
+**Example:**
+```typescript
+await fs.writeFile("/test.txt", "Hello, World!");
+await fs.writeFile("/binary.bin", Buffer.from([0x00, 0x01, 0x02]));
+```
 
 #### appendFile
 
@@ -235,7 +271,16 @@ async appendFile(
 ): Promise<boolean>
 ```
 
-- **Returns**: Always returns `true`
+**Parameters:**
+- `filePath`: Path to the file to append to
+- `content`: Content to append (string or Buffer)
+
+**Returns:** Always returns `true`
+
+**Example:**
+```typescript
+await fs.appendFile("/log.txt", "New log entry\n");
+```
 
 #### deleteFile
 
@@ -245,7 +290,15 @@ Deletes a file from the file system.
 async deleteFile(filePath: string): Promise<boolean>
 ```
 
-- **Returns**: Always returns `true` (even for non-existent files)
+**Parameters:**
+- `filePath`: Path to the file to delete
+
+**Returns:** Always returns `true` (even for non-existent files)
+
+**Example:**
+```typescript
+await fs.deleteFile("/temp.txt");
+```
 
 #### exists
 
@@ -255,7 +308,17 @@ Checks if a file exists in the file system.
 async exists(filePath: string): Promise<boolean>
 ```
 
-- **Returns**: `true` if file exists, `false` otherwise
+**Parameters:**
+- `filePath`: Path to check
+
+**Returns:** `true` if file exists, `false` otherwise
+
+**Example:**
+```typescript
+if (await fs.exists("/README.md")) {
+  console.log("File exists!");
+}
+```
 
 #### copy
 
@@ -269,10 +332,25 @@ async copy(
 ): Promise<boolean>
 ```
 
-- **options.overwrite**: Whether to overwrite destination if it exists (default: false)
-- **Returns**: `true`
-- **Throws**: Error if destination exists and overwrite is false
-- **Note**: Returns `true` for non-existent source files (mock behavior)
+**Parameters:**
+- `source`: Source file path
+- `destination`: Destination file path
+- `options.overwrite`: Whether to overwrite destination if it exists (default: `false`)
+
+**Returns:** `true`
+
+**Throws:** Error if destination exists and overwrite is false
+
+**Note:** Returns `true` for non-existent source files (mock behavior)
+
+**Example:**
+```typescript
+// Copy without overwrite
+await fs.copy("/src/file.txt", "/dest/file.txt");
+
+// Copy with overwrite
+await fs.copy("/src/file.txt", "/dest/file.txt", { overwrite: true });
+```
 
 #### rename
 
@@ -285,9 +363,20 @@ async rename(
 ): Promise<boolean>
 ```
 
-- **Returns**: `true`
-- **Throws**: Error if destination exists
-- **Note**: Returns `true` for non-existent source files (mock behavior)
+**Parameters:**
+- `oldPath`: Current file path
+- `newPath`: New file path
+
+**Returns:** `true`
+
+**Throws:** Error if destination exists
+
+**Note:** Returns `true` for non-existent source files (mock behavior)
+
+**Example:**
+```typescript
+await fs.rename("/old-name.txt", "/new-name.txt");
+```
 
 #### stat
 
@@ -297,15 +386,27 @@ Gets file statistics.
 async stat(filePath: string): Promise<StatLike>
 ```
 
-- **Returns**: File statistics object with properties:
-  - `exists`: boolean
-  - `path`: string
-  - `absolutePath`: string (if exists)
-  - `isFile`: boolean (if exists)
-  - `isDirectory`: boolean (if exists)
-  - `isSymbolicLink`: boolean (always false)
-  - `size`: number (if exists)
-  - `created`, `modified`, `accessed`: Date (if exists)
+**Parameters:**
+- `filePath`: Path to the file
+
+**Returns:** File statistics object with properties:
+- `exists`: boolean
+- `path`: string
+- `absolutePath`: string (if exists)
+- `isFile`: boolean (if exists)
+- `isDirectory`: boolean (if exists)
+- `isSymbolicLink`: boolean (always false)
+- `size`: number (if exists)
+- `created`, `modified`, `accessed`: Date (if exists)
+
+**Example:**
+```typescript
+const stats = await fs.stat("/README.md");
+if (stats.exists) {
+  console.log(`Size: ${stats.size} bytes`);
+  console.log(`Modified: ${stats.modified}`);
+}
+```
 
 #### glob
 
@@ -320,9 +421,22 @@ async glob(
 ): Promise<string[]>
 ```
 
-- **pattern**: Glob pattern (currently ignored, only ignoreFilter is applied)
-- **options.ignoreFilter**: Optional filter function
-- **Returns**: Array of matching file paths
+**Parameters:**
+- `pattern`: Glob pattern (currently ignored, only ignoreFilter is applied)
+- `options.ignoreFilter`: Optional filter function
+
+**Returns:** Array of matching file paths
+
+**Example:**
+```typescript
+// Get all files (pattern is ignored)
+const allFiles = await fs.glob("*");
+
+// Filter out test files
+const sourceFiles = await fs.glob("*", {
+  ignoreFilter: (path) => path.includes(".test.")
+});
+```
 
 #### watch
 
@@ -335,8 +449,18 @@ async watch(
 ): Promise<any>
 ```
 
-- **Returns**: `null`
-- **Note**: Logs a warning as this functionality is not implemented
+**Parameters:**
+- `dir`: Directory to watch
+- `options`: Watch options
+
+**Returns:** `null`
+
+**Note:** Logs a warning as this functionality is not implemented
+
+**Example:**
+```typescript
+const watcher = await fs.watch("/src"); // Returns null, logs warning
+```
 
 #### grep
 
@@ -355,22 +479,47 @@ async grep(
 ): Promise<GrepResult[]>
 ```
 
-- **searchString**: Search string(s)
-- **options.ignoreFilter**: Optional filter function
-- **options.includeContent.linesBefore**: Number of lines before match (default: 0)
-- **options.includeContent.linesAfter**: Number of lines after match (default: 0)
-- **Returns**: Array of search results with properties:
-  - `file`: string
-  - `line`: number
-  - `match`: string
-  - `matchedString`: string
-  - `content`: string | null
+**Parameters:**
+- `searchString`: Search string(s) - uses first element if array
+- `options.ignoreFilter`: Optional filter function
+- `options.includeContent.linesBefore`: Number of lines before match (default: `0`)
+- `options.includeContent.linesAfter`: Number of lines after match (default: `0`)
+
+**Returns:** Array of search results with properties:
+- `file`: string - File path
+- `line`: number - Line number (1-indexed)
+- `match`: string - The matching line
+- `matchedString`: string - The search string that matched
+- `content`: string | null - Context content if requested
+
+**Example:**
+```typescript
+// Basic search
+const results = await fs.grep("console");
+for (const result of results) {
+  console.log(`${result.file}:${result.line}: ${result.match}`);
+}
+
+// Search with context
+const withContext = await fs.grep("console", {
+  includeContent: { linesBefore: 1, linesAfter: 1 }
+});
+for (const result of withContext) {
+  console.log(`\n--- ${result.file}:${result.line} ---`);
+  console.log(result.content);
+}
+
+// Search with ignore filter
+const filtered = await fs.grep("import", {
+  ignoreFilter: (path) => path.includes("node_modules")
+});
+```
 
 ## Plugin Configuration
 
 ### Configuration Schema
 
-The plugin configuration uses the `FileSystemConfigSchema` from `@tokenring-ai/filesystem`:
+The plugin uses `FileSystemConfigSchema` from `@tokenring-ai/filesystem` for configuration validation:
 
 ```typescript
 import { FileSystemConfigSchema } from "@tokenring-ai/filesystem/schema";
@@ -379,17 +528,6 @@ import { z } from "zod";
 const packageConfigSchema = z.object({
   filesystem: FileSystemConfigSchema
 });
-
-// Example configuration
-const config = {
-  filesystem: {
-    providers: {
-      browser: {
-        type: "browser"
-      }
-    }
-  }
-};
 ```
 
 ### Plugin Registration
@@ -430,6 +568,18 @@ app.services.waitForItemByType(
 
 This package integrates with the `FileSystemService` from `@tokenring-ai/filesystem`. The provider is automatically registered when the plugin is loaded with the appropriate configuration.
 
+The plugin registers the browser file system provider with the name specified in the configuration:
+
+```typescript
+// Plugin registration logic
+if (provider.type === "browser") {
+  fileSystemService.registerFileSystemProvider(
+    name, // e.g., "browser"
+    new BrowserFileSystemProvider()
+  );
+}
+```
+
 ## State Management
 
 The BrowserFileSystemProvider maintains state entirely in memory using a JavaScript object:
@@ -461,6 +611,7 @@ const mockFileSystem: Record<string, { content: string }> = {
 - **No Symbolic Links**: `isSymbolicLink` always returns `false`
 - **Fixed Timestamps**: `created`, `modified`, and `accessed` timestamps are simulated
 - **Glob Pattern Ignored**: The glob pattern parameter is currently ignored; only the ignoreFilter is applied
+- **Mock Behavior for Copy/Rename**: Returns `true` for non-existent source files
 
 ## Error Handling
 
@@ -477,6 +628,26 @@ The provider may throw the following errors:
 
 - `Error` - Path conflicts during copy/rename operations (when destination exists without overwrite option)
 - `Error` - General errors for file operations
+
+### Error Examples
+
+```typescript
+// Copy error - destination exists
+try {
+  await fs.copy("/source.txt", "/existing.txt");
+} catch (error) {
+  console.error(error.message);
+  // "Destination file already exists: /existing.txt. Use overwrite option to replace."
+}
+
+// Rename error - destination exists
+try {
+  await fs.rename("/source.txt", "/existing.txt");
+} catch (error) {
+  console.error(error.message);
+  // "Destination file already exists: /existing.txt"
+}
+```
 
 ## Testing
 
@@ -509,6 +680,11 @@ The package includes comprehensive unit and integration tests covering:
 - **Performance**: Large file handling and batch operations
 - **Integration**: Plugin registration and service integration
 
+### Test Files
+
+- `BrowserFileSystemProvider.test.ts` - Unit tests for provider methods
+- `integration.test.ts` - End-to-end integration tests
+
 ## Dependencies
 
 ### Production Dependencies
@@ -519,7 +695,7 @@ The package includes comprehensive unit and integration tests covering:
 
 ### Development Dependencies
 
-- `vitest` (^4.0.18) - Testing framework
+- `vitest` (^4.1.0) - Testing framework
 - `typescript` (^5.9.3) - TypeScript compiler
 
 ## License
