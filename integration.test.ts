@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, it} from "vitest";
+import {beforeEach, describe, expect, it, vi} from "vitest";
 import BrowserFileSystemProvider from "./BrowserFileSystemProvider";
 import plugin from "./plugin";
 
@@ -228,14 +228,12 @@ describe("Integration Tests", () => {
         }
       };
       
-      // Import and test the plugin
-
-      
+      // Verify plugin is defined
       expect(plugin).toBeDefined();
       expect(plugin.name).toBe("@tokenring-ai/browser-file-system");
       
       // Test installation
-      plugin.install(mockApp,{ filesystem: {
+      plugin.install(mockApp as any, { filesystem: {
         providers: {
           browser: { type: "browser" }
         }
