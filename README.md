@@ -1,30 +1,53 @@
 # @tokenring-ai/browser-file-system
 
+**IMPORTANT**: This is a **mock implementation** designed for browser environments, testing, and demonstration purposes. All operations are performed in-memory with no persistence across page reloads.
+
 A browser-based file system provider that implements the `FileSystemProvider` interface using in-memory mock data. This package provides a lightweight, browser-friendly file system abstraction for environments where direct access to the file system is not available, making it ideal for demos, tests, and web-based interfaces like web terminals.
 
 ## Overview
 
-The `BrowserFileSystemProvider` implements the complete `FileSystemProvider` interface and provides a comprehensive set of file system operations that work entirely in memory. It ships with a built-in mock file system containing sample files, allowing for immediate exploration without external setup.
+The `BrowserFileSystemProvider` implements the complete `FileSystemProvider` interface from `@tokenring-ai/filesystem` and provides a comprehensive set of file system operations that work entirely in memory. It ships with a built-in mock file system containing sample files, allowing for immediate exploration without external setup.
+
+**Key Characteristics:**
+- **In-Memory Only**: No persistence across page reloads or provider destruction
+- **Mock Behavior**: Gracefully handles edge cases (non-existent files in copy/rename) for testing
+- **Browser-Optimized**: Designed for browser environments where direct file system access is unavailable
+- **Plugin-Ready**: Integrates seamlessly with TokenRing's plugin system for automatic service registration
 
 ## Features
 
-- In-memory file system operations for browser environments
-- Full read/write capabilities with file existence checking
-- Directory traversal with recursive and non-recursive options
-- File copy and rename operations with overwrite support
-- Content search (grep) with context line support
-- File statistics (size, timestamps, metadata)
-- TokenRing plugin integration for automatic service registration
-- Comprehensive error handling with descriptive messages
-- Support for ignore filters in directory traversal, glob, and search
-- Path normalization for consistent path handling
-- Comprehensive test coverage with unit and integration tests
+- **In-Memory File System**: Complete file system operations that work entirely in memory, perfect for browser environments
+- **Full CRUD Operations**: Read, write, append, and delete files with proper content handling (string and Buffer support)
+- **Directory Traversal**: Async generator-based tree traversal with recursive and non-recursive modes
+- **File Operations**: Copy and rename files with overwrite protection and conflict detection
+- **Content Search**: Grep functionality with context line support (lines before/after matches)
+- **File Statistics**: Detailed file metadata including size, timestamps, and type information
+- **Path Management**: Automatic path normalization for consistent handling across operations
+- **Ignore Filters**: Support for custom ignore filters in directory traversal, glob, and search operations
+- **TokenRing Integration**: Plugin-based service registration with automatic FileServiceProvider integration
+- **Comprehensive Error Handling**: Descriptive error messages for conflicts and invalid operations
+- **Mock Behavior**: Graceful handling of non-existent files in copy/rename operations (returns true without error)
+- **Test Coverage**: Extensive unit and integration tests with vitest
 
 ## Installation
 
 ```bash
 bun install @tokenring-ai/browser-file-system
 ```
+
+## Module Exports
+
+The package uses ES modules (`"type": "module"`) and exports the following:
+
+```typescript
+// Main provider export
+export { default as BrowserFileSystemProvider } from "./BrowserFileSystemProvider.ts";
+
+// Package entry point
+export { default } from "./plugin.ts"; // TokenRing plugin
+```
+
+**Note:** All exports use `.ts` extensions for direct TypeScript imports in the monorepo.
 
 ## Package Structure
 
@@ -337,19 +360,27 @@ async copy(
 - `destination`: Destination file path
 - `options.overwrite`: Whether to overwrite destination if it exists (default: `false`)
 
-**Returns:** `true`
+**Returns:** `true` - Always returns true
 
-**Throws:** Error if destination exists and overwrite is false
+**Throws:** Error if destination exists and overwrite is `false`
 
-**Note:** Returns `true` for non-existent source files (mock behavior)
+**Mock Behavior:** Returns `true` even for non-existent source files without throwing an error. This is intentional mock behavior for testing purposes.
 
 **Example:**
 ```typescript
-// Copy without overwrite
-await fs.copy("/src/file.txt", "/dest/file.txt");
+// Copy without overwrite (throws if destination exists)
+try {
+  await fs.copy("/src/file.txt", "/dest/file.txt");
+} catch (error) {
+  console.error(error.message); // "Destination file already exists..."
+}
 
 // Copy with overwrite
 await fs.copy("/src/file.txt", "/dest/file.txt", { overwrite: true });
+
+// Copy non-existent source (mock behavior - returns true)
+const result = await fs.copy("/non-existent.txt", "/dest.txt");
+console.log(result); // true (no error thrown)
 ```
 
 #### rename
@@ -367,15 +398,27 @@ async rename(
 - `oldPath`: Current file path
 - `newPath`: New file path
 
-**Returns:** `true`
+**Returns:** `true` - Always returns true
 
-**Throws:** Error if destination exists
+**Throws:** Error if destination file already exists
 
-**Note:** Returns `true` for non-existent source files (mock behavior)
+**Mock Behavior:** Returns `true` even for non-existent source files without throwing an error. This is intentional mock behavior for testing purposes.
 
 **Example:**
 ```typescript
+// Rename existing file
 await fs.rename("/old-name.txt", "/new-name.txt");
+
+// Rename with existing destination (throws error)
+try {
+  await fs.rename("/source.txt", "/existing.txt");
+} catch (error) {
+  console.error(error.message); // "Destination file already exists..."
+}
+
+// Rename non-existent source (mock behavior - returns true)
+const result = await fs.rename("/non-existent.txt", "/new.txt");
+console.log(result); // true (no error thrown)
 ```
 
 #### stat
@@ -410,7 +453,7 @@ if (stats.exists) {
 
 #### glob
 
-Matches files using a glob pattern.
+Matches files using a glob pattern. **Note**: The pattern parameter is currently ignored; only the ignoreFilter is applied.
 
 ```typescript
 async glob(
@@ -422,20 +465,22 @@ async glob(
 ```
 
 **Parameters:**
-- `pattern`: Glob pattern (currently ignored, only ignoreFilter is applied)
-- `options.ignoreFilter`: Optional filter function
+- `pattern`: Glob pattern (currently ignored in mock implementation; returns all files)
+- `options.ignoreFilter`: Optional filter function to exclude files
 
-**Returns:** Array of matching file paths
+**Returns:** Array of all file paths in the mock file system, filtered by ignoreFilter if provided
 
 **Example:**
 ```typescript
-// Get all files (pattern is ignored)
+// Get all files (pattern is ignored, returns all mock files)
 const allFiles = await fs.glob("*");
+// Returns: ["/README.md", "/src/index.js", "/src/components/Button.jsx", "/package.json"]
 
 // Filter out test files
 const sourceFiles = await fs.glob("*", {
   ignoreFilter: (path) => path.includes(".test.")
 });
+// Returns files that don't match the ignore filter
 ```
 
 #### watch
@@ -695,8 +740,8 @@ The package includes comprehensive unit and integration tests covering:
 
 ### Development Dependencies
 
-- `vitest` (^4.1.0) - Testing framework
-- `typescript` (^5.9.3) - TypeScript compiler
+- `vitest` (^4.1.1) - Testing framework
+- `typescript` (^6.0.2) - TypeScript compiler
 
 ## License
 
