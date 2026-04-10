@@ -1,4 +1,4 @@
-import FileSystemProvider, {GlobOptions, GrepOptions, GrepResult, StatLike, WatchOptions,} from "@tokenring-ai/filesystem/FileSystemProvider";
+import type {FileSystemProvider, GlobOptions, GrepOptions, GrepResult, StatLike, WatchOptions} from "@tokenring-ai/filesystem/FileSystemProvider";
 
 // Simplified in-memory file structure - key is absolute path, value is { content }
 const mockFileSystem: Record<string, { content: string }> = {
@@ -16,10 +16,10 @@ const mockFileSystem: Record<string, { content: string }> = {
 };
 
 export default class BrowserFileSystemProvider implements FileSystemProvider {
-	async *getDirectoryTree(
+  * getDirectoryTree(
 		path: string = "/",
 		params: any = {},
-	): AsyncGenerator<string, void, unknown> {
+  ): Generator<string, void, unknown> {
 		const { ig, recursive = true } = params || {};
 
 		// Normalize the path - ensure it starts with '/' and doesn't end with '/' unless it's root
@@ -51,50 +51,56 @@ export default class BrowserFileSystemProvider implements FileSystemProvider {
 					: filePath.substring(normalizedPath.length + 1);
 
 			// Skip if ignore filter rejects this path
-			if (ig && ig(relativePath)) {
+      if (ig?.(relativePath)) {
 				continue;
 			}
 
 			yield filePath;
 		}
 	}
-	
-	async createDirectory(path: string, options?: { recursive?: boolean }): Promise<boolean> {
+
+  createDirectory(
+    _path: string,
+    _options?: { recursive?: boolean },
+  ): boolean {
 		//noop
 		return true;
 	}
 
-	async readFile(filePath: string): Promise<Buffer|null> {
+  readFile(filePath: string): Buffer | null {
 		if (mockFileSystem[filePath]) {
 			return Buffer.from(mockFileSystem[filePath].content || "");
 		}
     return null;
 	}
-	
-	async writeFile(
+
+  writeFile(
 		filePath: string,
 		content: string | Buffer,
-	): Promise<boolean> {
+  ): boolean {
 		mockFileSystem[filePath] = { content: content.toString("utf-8") };
 		return true;
 	}
 
-	async appendFile(filePath: string, content: string | Buffer): Promise<boolean> {
+  appendFile(
+    filePath: string,
+    content: string | Buffer,
+  ): boolean {
 		const contentStr = content.toString("utf-8");
-		
+
 		// If file doesn't exist, create it with the content
 		if (!mockFileSystem[filePath]) {
 			mockFileSystem[filePath] = { content: contentStr };
 		} else {
 			// If file exists, append the content
 			mockFileSystem[filePath] = {
-				content: (mockFileSystem[filePath].content || "") + contentStr
+        content: (mockFileSystem[filePath].content || "") + contentStr,
 			};
 		}
 		return true;
 	}
 
-  async deleteFile(filePath: string): Promise<boolean> {
+  deleteFile(filePath: string): boolean {
     if (mockFileSystem[filePath]) {
       delete mockFileSystem[filePath];
       return true;
@@ -102,15 +108,15 @@ export default class BrowserFileSystemProvider implements FileSystemProvider {
     return true;
 	}
 
-	async exists(filePath: string): Promise<boolean> {
-		return Promise.resolve(!!mockFileSystem[filePath]);
+  exists(filePath: string): boolean {
+    return !!mockFileSystem[filePath];
 	}
 
-	async copy(
+  copy(
 		source: string,
 		destination: string,
 		options: { overwrite?: boolean } = {},
-	): Promise<boolean> {
+  ): boolean {
 		console.warn(
 			`BrowserFileSystemService: copy called from ${source} to ${destination}. This is a mock implementation.`,
 		);
@@ -132,10 +138,10 @@ export default class BrowserFileSystemProvider implements FileSystemProvider {
 		};
 
 		console.log(`Mock copy: ${source} copied to ${destination} in memory.`);
-		return Promise.resolve(true);
+    return true;
 	}
 
-	async rename(oldPath: string, newPath: string): Promise<boolean> {
+  rename(oldPath: string, newPath: string): boolean {
 		console.warn(
 			`BrowserFileSystemService: rename called from ${oldPath} to ${newPath}. This is a mock implementation.`,
 		);
@@ -158,15 +164,15 @@ export default class BrowserFileSystemProvider implements FileSystemProvider {
 		delete mockFileSystem[oldPath];
 
 		console.log(`Mock rename: ${oldPath} renamed to ${newPath} in memory.`);
-		return Promise.resolve(true);
+    return true;
 	}
 
-	async stat(filePath: string): Promise<StatLike> {
+  stat(filePath: string): StatLike {
 		if (!mockFileSystem[filePath]) {
       return {
         exists: false,
         path: filePath,
-      }
+      };
 		}
 
 		const content = mockFileSystem[filePath].content;
@@ -184,37 +190,37 @@ export default class BrowserFileSystemProvider implements FileSystemProvider {
 		};
 	}
 
-	async glob(pattern: string, options?: GlobOptions): Promise<string[]> {
+  glob(_pattern: string, options?: GlobOptions): string[] {
 		const { ignoreFilter } = options || {};
 		const allFiles = Object.keys(mockFileSystem);
-		return allFiles.filter(file => !ignoreFilter || !ignoreFilter(file));
+    return allFiles.filter((file) => !ignoreFilter?.(file));
 	}
 
-	async watch(dir: string, options?: WatchOptions): Promise<any> {
-		console.warn("BrowserFileSystemProvider: watch not implemented");
-		return Promise.resolve(null);
+  watch(_dir: string, _options?: WatchOptions) {
+    throw new Error("BrowserFileSystemProvider: watch not implemented");
 	}
 
-	async grep(
+  grep(
 		searchString: string | string[],
 		options?: GrepOptions,
-	): Promise<GrepResult[]> {
+  ): GrepResult[] {
 		const search = Array.isArray(searchString) ? searchString[0] : searchString;
 		const { ignoreFilter, includeContent } = options || {};
 		const { linesBefore = 0, linesAfter = 0 } = includeContent || {};
 		const results: GrepResult[] = [];
 
 		for (const [file, { content }] of Object.entries(mockFileSystem)) {
-			if (ignoreFilter && ignoreFilter(file)) continue;
+      if (ignoreFilter?.(file)) continue;
 
 			const lines = content.split("\n");
 			for (let i = 0; i < lines.length; i++) {
 				if (lines[i].includes(search)) {
 					const start = Math.max(0, i - linesBefore);
 					const end = Math.min(lines.length - 1, i + linesAfter);
-					const contextContent = linesBefore > 0 || linesAfter > 0
-						? lines.slice(start, end + 1).join("\n")
-						: null;
+          const contextContent =
+            linesBefore > 0 || linesAfter > 0
+              ? lines.slice(start, end + 1).join("\n")
+              : null;
 
 					results.push({
 						file,
