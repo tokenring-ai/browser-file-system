@@ -9,6 +9,7 @@ A browser-based file system provider that implements the `FileSystemProvider` in
 The `BrowserFileSystemProvider` implements the complete `FileSystemProvider` interface from `@tokenring-ai/filesystem` and provides a comprehensive set of file system operations that work entirely in memory. It ships with a built-in mock file system containing sample files, allowing for immediate exploration without external setup.
 
 **Key Characteristics:**
+
 - **In-Memory Only**: No persistence across page reloads or provider destruction
 - **Mock Behavior**: Gracefully handles edge cases (non-existent files in copy/rename) for testing
 - **Browser-Optimized**: Designed for browser environments where direct file system access is unavailable
@@ -204,6 +205,7 @@ async *getDirectoryTree(
 ```
 
 **Parameters:**
+
 - `path`: Directory path to list (default: `"/"`)
 - `params.recursive`: Whether to include subdirectories (default: `true`)
 - `params.ig`: Optional ignore filter function `(path: string) => boolean`
@@ -211,6 +213,7 @@ async *getDirectoryTree(
 **Returns:** Async generator yielding file paths
 
 **Example:**
+
 ```typescript
 for await (const filePath of fs.getDirectoryTree("/src", { recursive: true })) {
   console.log(filePath);
@@ -229,12 +232,14 @@ async createDirectory(
 ```
 
 **Parameters:**
+
 - `path`: Directory path to create
 - `options.recursive`: Whether to create parent directories (default: `false`)
 
 **Returns:** Always returns `true`
 
 **Example:**
+
 ```typescript
 await fs.createDirectory("/new/dir", { recursive: true });
 ```
@@ -248,11 +253,13 @@ async readFile(filePath: string): Promise<Buffer | null>
 ```
 
 **Parameters:**
+
 - `filePath`: Path to the file to read
 
 **Returns:** File content as Buffer or `null` if file doesn't exist
 
 **Example:**
+
 ```typescript
 const content = await fs.readFile("/README.md");
 if (content) {
@@ -272,12 +279,14 @@ async writeFile(
 ```
 
 **Parameters:**
+
 - `filePath`: Path to the file to write
 - `content`: Content to write (string or Buffer)
 
 **Returns:** Always returns `true`
 
 **Example:**
+
 ```typescript
 await fs.writeFile("/test.txt", "Hello, World!");
 await fs.writeFile("/binary.bin", Buffer.from([0x00, 0x01, 0x02]));
@@ -295,12 +304,14 @@ async appendFile(
 ```
 
 **Parameters:**
+
 - `filePath`: Path to the file to append to
 - `content`: Content to append (string or Buffer)
 
 **Returns:** Always returns `true`
 
 **Example:**
+
 ```typescript
 await fs.appendFile("/log.txt", "New log entry\n");
 ```
@@ -314,11 +325,13 @@ async deleteFile(filePath: string): Promise<boolean>
 ```
 
 **Parameters:**
+
 - `filePath`: Path to the file to delete
 
 **Returns:** Always returns `true` (even for non-existent files)
 
 **Example:**
+
 ```typescript
 await fs.deleteFile("/temp.txt");
 ```
@@ -332,11 +345,13 @@ async exists(filePath: string): Promise<boolean>
 ```
 
 **Parameters:**
+
 - `filePath`: Path to check
 
 **Returns:** `true` if file exists, `false` otherwise
 
 **Example:**
+
 ```typescript
 if (await fs.exists("/README.md")) {
   console.log("File exists!");
@@ -356,6 +371,7 @@ async copy(
 ```
 
 **Parameters:**
+
 - `source`: Source file path
 - `destination`: Destination file path
 - `options.overwrite`: Whether to overwrite destination if it exists (default: `false`)
@@ -367,6 +383,7 @@ async copy(
 **Mock Behavior:** Returns `true` even for non-existent source files without throwing an error. This is intentional mock behavior for testing purposes.
 
 **Example:**
+
 ```typescript
 // Copy without overwrite (throws if destination exists)
 try {
@@ -395,6 +412,7 @@ async rename(
 ```
 
 **Parameters:**
+
 - `oldPath`: Current file path
 - `newPath`: New file path
 
@@ -405,6 +423,7 @@ async rename(
 **Mock Behavior:** Returns `true` even for non-existent source files without throwing an error. This is intentional mock behavior for testing purposes.
 
 **Example:**
+
 ```typescript
 // Rename existing file
 await fs.rename("/old-name.txt", "/new-name.txt");
@@ -430,9 +449,11 @@ async stat(filePath: string): Promise<StatLike>
 ```
 
 **Parameters:**
+
 - `filePath`: Path to the file
 
 **Returns:** File statistics object with properties:
+
 - `exists`: boolean
 - `path`: string
 - `absolutePath`: string (if exists)
@@ -443,6 +464,7 @@ async stat(filePath: string): Promise<StatLike>
 - `created`, `modified`, `accessed`: Date (if exists)
 
 **Example:**
+
 ```typescript
 const stats = await fs.stat("/README.md");
 if (stats.exists) {
@@ -465,12 +487,14 @@ async glob(
 ```
 
 **Parameters:**
+
 - `pattern`: Glob pattern (currently ignored in mock implementation; returns all files)
 - `options.ignoreFilter`: Optional filter function to exclude files
 
 **Returns:** Array of all file paths in the mock file system, filtered by ignoreFilter if provided
 
 **Example:**
+
 ```typescript
 // Get all files (pattern is ignored, returns all mock files)
 const allFiles = await fs.glob("*");
@@ -495,6 +519,7 @@ async watch(
 ```
 
 **Parameters:**
+
 - `dir`: Directory to watch
 - `options`: Watch options
 
@@ -503,6 +528,7 @@ async watch(
 **Note:** Logs a warning as this functionality is not implemented
 
 **Example:**
+
 ```typescript
 const watcher = await fs.watch("/src"); // Returns null, logs warning
 ```
@@ -525,12 +551,14 @@ async grep(
 ```
 
 **Parameters:**
+
 - `searchString`: Search string(s) - uses first element if array
 - `options.ignoreFilter`: Optional filter function
 - `options.includeContent.linesBefore`: Number of lines before match (default: `0`)
 - `options.includeContent.linesAfter`: Number of lines after match (default: `0`)
 
 **Returns:** Array of search results with properties:
+
 - `file`: string - File path
 - `line`: number - Line number (1-indexed)
 - `match`: string - The matching line
@@ -538,6 +566,7 @@ async grep(
 - `content`: string | null - Context content if requested
 
 **Example:**
+
 ```typescript
 // Basic search
 const results = await fs.grep("console");
