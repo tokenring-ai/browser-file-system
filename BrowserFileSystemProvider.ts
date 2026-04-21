@@ -1,4 +1,5 @@
 import type {FileSystemProvider, GlobOptions, GrepOptions, GrepResult, StatLike, WatchOptions} from "@tokenring-ai/filesystem/FileSystemProvider";
+import {firstOfArrayable} from "@tokenring-ai/utility/array/arrayable";
 
 // Simplified in-memory file structure - key is absolute path, value is { content }
 const mockFileSystem: Record<string, { content: string }> = {
@@ -204,7 +205,10 @@ export default class BrowserFileSystemProvider implements FileSystemProvider {
 		searchString: string | string[],
 		options?: GrepOptions,
   ): GrepResult[] {
-		const search = Array.isArray(searchString) ? searchString[0] : searchString;
+		const search = firstOfArrayable(searchString);
+    if (search === undefined) {
+      throw new Error('Search array cannot be empty or undefined.');
+    }
 		const { ignoreFilter, includeContent } = options || {};
 		const { linesBefore = 0, linesAfter = 0 } = includeContent || {};
 		const results: GrepResult[] = [];
