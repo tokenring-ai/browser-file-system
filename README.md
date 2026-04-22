@@ -195,7 +195,8 @@ console.log(copyResult); // true (mock behavior)
 
 ## Provider API
 
-The provider implements the `FileSystemProvider` interface from `@tokenring-ai/filesystem`.
+The provider implements the `FileSystemProvider` interface from `@tokenring-ai/filesystem`. All methods are synchronous
+and operate directly on the in-memory file system.
 
 ### BrowserFileSystemProvider Methods
 
