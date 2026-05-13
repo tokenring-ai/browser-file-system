@@ -1,4 +1,4 @@
-import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import BrowserFileSystemProvider from "./BrowserFileSystemProvider";
 
 // Mock the console methods to suppress warnings during tests
@@ -41,14 +41,14 @@ describe("BrowserFileSystemProvider", () => {
         const content = await provider.readFile("/src/index.js");
         expect(content).not.toBeNull();
         expect(Buffer.isBuffer(content)).toBe(true);
-        expect(content.toString()).toBe('console.log("Hello from mock index.js");');
+        expect(content.toString()).toBe("console.log(\"Hello from mock index.js\");");
       });
 
       it("should read JSON file", async () => {
         const content = await provider.readFile("/package.json");
         expect(content).not.toBeNull();
         expect(Buffer.isBuffer(content)).toBe(true);
-        expect(content.toString()).toBe('{ "name": "mock-project", "version": "1.0.0" }');
+        expect(content.toString()).toBe("{ \"name\": \"mock-project\", \"version\": \"1.0.0\" }");
       });
 
       it("should return null for non-existent file", async () => {
@@ -61,7 +61,7 @@ describe("BrowserFileSystemProvider", () => {
       it("should write new file successfully", async () => {
         const result = await provider.writeFile("/test/new-file.txt", "Test content");
         expect(result).toBe(true);
-        
+
         const content = await provider.readFile("/test/new-file.txt");
         expect(content).not.toBeNull();
         expect(Buffer.isBuffer(content)).toBe(true);
@@ -71,7 +71,7 @@ describe("BrowserFileSystemProvider", () => {
       it("should overwrite existing file", async () => {
         const originalContent = await provider.readFile("/README.md");
         const newContent = "# Updated content";
-        
+
         await provider.writeFile("/README.md", newContent);
         const updatedContent = await provider.readFile("/README.md");
 
@@ -84,7 +84,7 @@ describe("BrowserFileSystemProvider", () => {
       it("should handle Buffer content", async () => {
         const bufferContent = Buffer.from("Buffer content");
         const result = await provider.writeFile("/test/buffer.txt", bufferContent);
-        
+
         expect(result).toBe(true);
         const content = await provider.readFile("/test/buffer.txt");
         expect(content).not.toBeNull();
@@ -96,7 +96,7 @@ describe("BrowserFileSystemProvider", () => {
     describe("appendFile", () => {
       it("should append to existing file", async () => {
         await provider.appendFile("/README.md", "\n## Added content");
-        
+
         const content = await provider.readFile("/README.md");
         expect(content).not.toBeNull();
         expect(Buffer.isBuffer(content)).toBe(true);
@@ -105,7 +105,7 @@ describe("BrowserFileSystemProvider", () => {
 
       it("should create file if it doesn't exist", async () => {
         await provider.appendFile("/new-file.txt", "New content");
-        
+
         const content = await provider.readFile("/new-file.txt");
         expect(content).not.toBeNull();
         expect(Buffer.isBuffer(content)).toBe(true);
@@ -114,7 +114,7 @@ describe("BrowserFileSystemProvider", () => {
 
       it("should handle Buffer content in append", async () => {
         await provider.appendFile("/test/buffer.txt", Buffer.from(" appended"));
-        
+
         const content = await provider.readFile("/test/buffer.txt");
         expect(content).not.toBeNull();
         expect(Buffer.isBuffer(content)).toBe(true);
@@ -150,7 +150,7 @@ describe("BrowserFileSystemProvider", () => {
         for await (const filePath of provider.getDirectoryTree("/")) {
           files.push(filePath);
         }
-        
+
         expect(files).toContain("/README.md");
         expect(files).toContain("/src/index.js");
         expect(files).toContain("/src/components/Button.jsx");
@@ -162,7 +162,7 @@ describe("BrowserFileSystemProvider", () => {
         for await (const filePath of provider.getDirectoryTree("/", { recursive: false })) {
           files.push(filePath);
         }
-        
+
         // Should only return direct children of root
         expect(files).toContain("/README.md");
         expect(files).toContain("/src/index.js");
@@ -173,14 +173,14 @@ describe("BrowserFileSystemProvider", () => {
       it("should support ignore filter", async () => {
         const files: string[] = [];
         const ignoreFilter = (path: string) => path.includes(".jsx");
-        
-        for await (const filePath of provider.getDirectoryTree("/", { 
+
+        for await (const filePath of provider.getDirectoryTree("/", {
           ig: ignoreFilter,
-          recursive: true 
+          recursive: true
         })) {
           files.push(filePath);
         }
-        
+
         expect(files).not.toContain("/src/components/Button.jsx");
         expect(files).toContain("/src/index.js");
       });
@@ -191,7 +191,7 @@ describe("BrowserFileSystemProvider", () => {
         for await (const filePath of provider.getDirectoryTree("/src/")) {
           files.push(filePath);
         }
-        
+
         expect(files).toContain("/src/index.js");
         expect(files).toContain("/src/components/Button.jsx");
       });
@@ -227,7 +227,7 @@ describe("BrowserFileSystemProvider", () => {
       it("should copy file successfully", async () => {
         const result = await provider.copy("/README.md", "/copy-of-readme.md");
         expect(result).toBe(true);
-        
+
         const originalContent = await provider.readFile("/README.md");
         const copiedContent = await provider.readFile("/copy-of-readme.md");
 
@@ -251,7 +251,7 @@ describe("BrowserFileSystemProvider", () => {
 
       it("should overwrite existing file with overwrite option", async () => {
         await provider.writeFile("/src/sample.js", "Sample content");
-        const result = await provider.copy("/src/sample.js", "/src/index.js", {overwrite: true});
+        const result = await provider.copy("/src/sample.js", "/src/index.js", { overwrite: true });
 
         expect(result).toBe(true);
         const content = await provider.readFile("/src/index.js");
@@ -264,13 +264,13 @@ describe("BrowserFileSystemProvider", () => {
       it("should rename file successfully", async () => {
         await provider.writeFile("/temp-readme.md", "Test content");
         const result = await provider.rename("/temp-readme.md", "/renamed-readme.md");
-        
+
         expect(result).toBe(true);
-        
+
         // Old file should not exist
         const exists = await provider.exists("/temp-readme.md");
         expect(exists).toBe(false);
-        
+
         // New file should exist
         const content = await provider.readFile("/renamed-readme.md");
         expect(content).not.toBeNull();
@@ -293,7 +293,7 @@ describe("BrowserFileSystemProvider", () => {
     describe("stat", () => {
       it("should return file statistics", async () => {
         const stats = await provider.stat("/README.md");
-        
+
         expect(stats.path).toBe("/README.md");
         expect(stats.exists).toBe(true);
         expect(stats.isFile).toBe(true);
@@ -328,7 +328,7 @@ describe("BrowserFileSystemProvider", () => {
         const files = await provider.glob("*", {
           ignoreFilter: (file) => file.includes(".jsx")
         });
-        
+
         expect(files).not.toContain("/src/components/Button.jsx");
         expect(files).toContain("/src/index.js");
       });
@@ -345,7 +345,7 @@ describe("BrowserFileSystemProvider", () => {
       it("should find text in files", async () => {
         await provider.writeFile("/src/index.js", "\nconsole.log('Hello from grep');");
         const results = await provider.grep("console");
-        
+
         expect(results.length).toBeGreaterThan(0);
         const consoleResult = results.find(r => r.file.includes("index.js"));
         expect(consoleResult).toBeDefined();
@@ -361,7 +361,7 @@ describe("BrowserFileSystemProvider", () => {
         const results = await provider.grep("console", {
           ignoreFilter: (file) => file.includes(".jsx")
         });
-        
+
         const jsxResults = results.filter(r => r.file.includes(".jsx"));
         expect(jsxResults.length).toBe(0);
       });
@@ -370,7 +370,7 @@ describe("BrowserFileSystemProvider", () => {
         const results = await provider.grep("console", {
           includeContent: { linesBefore: 1, linesAfter: 1 }
         });
-        
+
         expect(results[0]).toHaveProperty("content");
         expect(results[0].content).toContain("console");
       });
@@ -390,7 +390,7 @@ describe("BrowserFileSystemProvider", () => {
         "/src/components/Button.jsx",
         "/package.json"
       ];
-      
+
       for (const file of mockFiles) {
         const exists = await provider.exists(file);
         expect(exists).toBe(true);

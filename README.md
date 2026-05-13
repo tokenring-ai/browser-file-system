@@ -605,7 +605,8 @@ const filtered = fs.grep("import", {
 
 ### Plugin Registration
 
-The plugin automatically registers the `BrowserFileSystemProvider` with the FileSystemService under the name `"browser"`:
+The plugin automatically registers the `BrowserFileSystemProvider` with the FileSystemService under the name
+`"browser"`:
 
 ```typescript
 import { TokenRingApp } from "@tokenring-ai/app";
