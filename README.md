@@ -43,19 +43,6 @@ file system containing sample files, allowing for immediate exploration without 
 bun install @tokenring-ai/browser-file-system
 ```
 
-## Module Exports
-
-The package uses ES modules (`"type": "module"`) and exports the following:
-
-```typescript
-// Main provider export
-export { default as BrowserFileSystemProvider } from "./BrowserFileSystemProvider.ts";
-```
-
-**Note:** All exports use `.ts` extensions for direct TypeScript imports in the monorepo.
-
-The plugin can be imported separately from `./plugin.ts` for TokenRing integration.
-
 ## Package Structure
 
 ```text
@@ -69,6 +56,23 @@ pkg/browser-file-system/
 ├── vitest.config.ts                  # Test configuration
 ├── LICENSE                           # License information
 └── README.md                         # This file
+```
+
+## Module Exports
+
+The package uses ES modules (`"type": "module"`) and exports the following:
+
+```typescript
+// Main provider export
+export { default as BrowserFileSystemProvider } from "./BrowserFileSystemProvider.ts";
+```
+
+**Note:** All exports use `.ts` extensions for direct TypeScript imports in the monorepo.
+
+The plugin can be imported separately from `./plugin.ts` for TokenRing integration:
+
+```typescript
+import browserFileSystem from "@tokenring-ai/browser-file-system/plugin";
 ```
 
 ## Core Components
@@ -112,20 +116,20 @@ import { BrowserFileSystemProvider } from "@tokenring-ai/browser-file-system";
 
 const fs = new BrowserFileSystemProvider();
 
-// Read a file
+// Read a file (synchronous - no await needed)
 const readmeContent = fs.readFile("/README.md");
 console.log(readmeContent?.toString("utf-8"));
 
-// Check if file exists
+// Check if file exists (synchronous)
 const hasPackageJson = fs.exists("/package.json"); // true
 
-// Write a new file
+// Write a new file (synchronous)
 fs.writeFile("/src/utils.js", "export const helper = () => 'Hello';");
 
-// Append to existing file
+// Append to existing file (synchronous)
 fs.appendFile("/README.md", "\n## Updated content\n");
 
-// Get directory tree
+// Get directory tree (synchronous generator)
 console.log("Files in mock system:");
 for (const filePath of fs.getDirectoryTree("/", { recursive: true })) {
   console.log(filePath);
@@ -135,18 +139,18 @@ for (const filePath of fs.getDirectoryTree("/", { recursive: true })) {
 ### Advanced Operations
 
 ```typescript
-// Copy file with overwrite
+// Copy file with overwrite (synchronous)
 fs.copy("/src/index.js", "/src/main.js", { overwrite: true });
 
-// Rename file
+// Rename file (synchronous)
 fs.rename("/src/main.js", "/src/app.js");
 
-// Search file contents with context
+// Search file contents with context (synchronous)
 const searchResults = fs.grep("console", {
   includeContent: { linesBefore: 1, linesAfter: 1 }
 });
 
-// Get file statistics
+// Get file statistics (synchronous)
 const stats = fs.stat("/README.md");
 console.log(`File size: ${stats.size} bytes`);
 
@@ -156,7 +160,7 @@ const files = fs.glob("**/*.js", {
 });
 console.log(files); // Returns all non-test files
 
-// Directory traversal with ignore filter
+// Directory traversal with ignore filter (synchronous generator)
 const nonTestFiles: string[] = [];
 for (const filePath of fs.getDirectoryTree("/", {
   recursive: true,
@@ -193,12 +197,29 @@ const copyResult = fs.copy("/non-existent.txt", "/dest.txt");
 console.log(copyResult); // true (mock behavior)
 ```
 
+### Mock Implementation Warnings
+
+The mock implementation logs console warnings for certain operations to indicate they are mock implementations:
+
+```typescript
+// copy and rename operations will log warnings:
+fs.copy("/src/index.js", "/src/main.js");
+// Console: "BrowserFileSystemService: copy called from /src/index.js to /src/main.js. This is a mock implementation."
+
+fs.rename("/src/main.js", "/src/app.js");
+// Console: "BrowserFileSystemService: rename called from /src/main.js to /src/app.js. This is a mock implementation."
+
+// In tests, these warnings are typically mocked to suppress them
+```
+
 ## Provider API
 
-The provider implements the `FileSystemProvider` interface from `@tokenring-ai/filesystem`. All methods are synchronous
-and operate directly on the in-memory file system.
+The provider implements the `FileSystemProvider` interface from `@tokenring-ai/filesystem`. All methods are **synchronous**
+and operate directly on the in-memory file system. No `await` is needed when calling these methods.
 
 ### BrowserFileSystemProvider Methods
+
+All methods are **synchronous** and return values directly (not Promises).
 
 #### getDirectoryTree
 
@@ -222,6 +243,7 @@ Returns a generator that yields file paths in a directory tree.
 **Example:**
 
 ```typescript
+// Synchronous iteration over file paths
 for (const filePath of fs.getDirectoryTree("/src", { recursive: true })) {
   console.log(filePath);
 }
@@ -248,6 +270,7 @@ createDirectory(
 **Example:**
 
 ```typescript
+// Synchronous - no await needed
 fs.createDirectory("/new/dir", { recursive: true });
 ```
 
@@ -268,6 +291,7 @@ readFile(filePath: string): Buffer | null
 **Example:**
 
 ```typescript
+// Synchronous - no await needed
 const content = fs.readFile("/README.md");
 if (content) {
   console.log(content.toString("utf-8"));
@@ -295,6 +319,7 @@ writeFile(
 **Example:**
 
 ```typescript
+// Synchronous - no await needed
 fs.writeFile("/test.txt", "Hello, World!");
 fs.writeFile("/binary.bin", Buffer.from([0x00, 0x01, 0x02]));
 ```
@@ -320,6 +345,7 @@ appendFile(
 **Example:**
 
 ```typescript
+// Synchronous - no await needed
 fs.appendFile("/log.txt", "New log entry\n");
 ```
 
@@ -340,6 +366,7 @@ deleteFile(filePath: string): boolean
 **Example:**
 
 ```typescript
+// Synchronous - no await needed
 fs.deleteFile("/temp.txt");
 ```
 
@@ -360,6 +387,7 @@ exists(filePath: string): boolean
 **Example:**
 
 ```typescript
+// Synchronous - no await needed
 if (fs.exists("/README.md")) {
   console.log("File exists!");
 }
@@ -383,12 +411,12 @@ copy(
 - `destination`: Destination file path
 - `options.overwrite`: Whether to overwrite destination if it exists (default: `false`)
 
-**Returns:** `true` - Always returns true
+**Returns:** `true`
 
 **Throws:** Error if destination exists and overwrite is `false`
 
 **Mock Behavior:** Returns `true` even for non-existent source files without throwing an error. This is intentional mock
-behavior for testing purposes.
+behavior for testing purposes. Also logs a console warning to indicate this is a mock implementation.
 
 **Example:**
 
@@ -424,12 +452,12 @@ rename(
 - `oldPath`: Current file path
 - `newPath`: New file path
 
-**Returns:** `true` - Always returns true
+**Returns:** `true`
 
 **Throws:** Error if destination file already exists
 
 **Mock Behavior:** Returns `true` even for non-existent source files without throwing an error. This is intentional mock
-behavior for testing purposes.
+behavior for testing purposes. Also logs a console warning to indicate this is a mock implementation.
 
 **Example:**
 
@@ -475,6 +503,7 @@ stat(filePath: string): StatLike
 **Example:**
 
 ```typescript
+// Synchronous - no await needed
 const stats = fs.stat("/README.md");
 if (stats.exists) {
   console.log(`Size: ${stats.size} bytes`);
@@ -484,8 +513,9 @@ if (stats.exists) {
 
 #### glob
 
-Matches files using a glob pattern. **Note**: The pattern parameter is currently ignored; only the ignoreFilter is
-applied.
+Matches files using a glob pattern. **Note:** The pattern parameter is currently ignored in the mock implementation;
+only the `ignoreFilter` option is applied. All files in the mock file system are returned, filtered only by the
+ignore filter if provided.
 
 ```typescript
 glob(
@@ -498,7 +528,7 @@ glob(
 
 **Parameters:**
 
-- `pattern`: Glob pattern (currently ignored in mock implementation; returns all files)
+- `pattern`: Glob pattern (currently ignored in mock implementation; all files are returned)
 - `options.ignoreFilter`: Optional filter function to exclude files
 
 **Returns:** Array of all file paths in the mock file system, filtered by ignoreFilter if provided
@@ -524,7 +554,7 @@ Watches for file changes (not implemented).
 ```typescript
 watch(
   dir: string,
-  options?: any
+  options?: WatchOptions
 ): void
 ```
 
@@ -533,14 +563,17 @@ watch(
 - `dir`: Directory to watch
 - `options`: Watch options
 
-**Throws:** Error - This functionality is not implemented
-
-**Note:** Throws an error as this functionality is not implemented
+**Throws:** Error - This functionality is not implemented. Throws an error with message:
+`"BrowserFileSystemProvider: watch not implemented"`
 
 **Example:**
 
 ```typescript
-fs.watch("/src"); // Throws error: "BrowserFileSystemProvider: watch not implemented"
+try {
+  fs.watch("/src");
+} catch (error) {
+  console.error(error.message); // "BrowserFileSystemProvider: watch not implemented"
+}
 ```
 
 #### grep
@@ -580,13 +613,13 @@ grep(
 **Example:**
 
 ```typescript
-// Basic search
+// Basic search (synchronous)
 const results = fs.grep("console");
 for (const result of results) {
   console.log(`${result.file}:${result.line}: ${result.match}`);
 }
 
-// Search with context
+// Search with context (synchronous)
 const withContext = fs.grep("console", {
   includeContent: { linesBefore: 1, linesAfter: 1 }
 });
@@ -595,7 +628,7 @@ for (const result of withContext) {
   console.log(result.content);
 }
 
-// Search with ignore filter
+// Search with ignore filter (synchronous)
 const filtered = fs.grep("import", {
   ignoreFilter: (path) => path.includes("node_modules")
 });
@@ -673,12 +706,13 @@ const mockFileSystem: Record<string, { content: string }> = {
 - **In-Memory Only**: No persistence across page reloads
 - **Browser Environment**: Designed for browser environments only
 - **Mock Data**: Limited to predefined mock files and directories (can be extended programmatically)
-- **No File Watching**: `watch` functionality not implemented
-- **Partial API**: Some advanced features log warnings for unsupported operations
+- **No File Watching**: `watch` functionality throws an error when called
+- **Console Warnings**: `copy` and `rename` operations log console warnings to indicate mock implementation
 - **No Symbolic Links**: `isSymbolicLink` always returns `false`
-- **Fixed Timestamps**: `created`, `modified`, and `accessed` timestamps are simulated
+- **Simulated Timestamps**: `created`, `modified`, and `accessed` timestamps are simulated with current time
 - **Glob Pattern Ignored**: The glob pattern parameter is currently ignored; only the ignoreFilter is applied
-- **Mock Behavior for Copy/Rename**: Returns `true` for non-existent source files
+- **Mock Behavior for Copy/Rename**: Returns `true` for non-existent source files without errors
+- **Synchronous API**: All methods are synchronous - no async/await support
 
 ## Error Handling
 
@@ -688,6 +722,7 @@ The provider implements comprehensive error handling:
 - **Path Conflicts**: Validates copy and rename operations, throwing errors for conflicts
 - **Invalid Operations**: Throws errors for unsupported operations (e.g., `watch`)
 - **Path Normalization**: Automatically normalizes paths for consistency
+- **Empty Search**: Throws error if `grep` is called with empty or undefined search array
 
 ### Error Types
 
@@ -695,6 +730,7 @@ The provider may throw the following errors:
 
 - `Error` - Path conflicts during copy/rename operations (when destination exists without overwrite option)
 - `Error` - Unsupported operations (e.g., `watch` not implemented)
+- `Error` - Empty search array in `grep` operation
 
 ### Error Examples
 
@@ -721,6 +757,14 @@ try {
 } catch (error) {
   console.error(error.message);
   // "BrowserFileSystemProvider: watch not implemented"
+}
+
+// Grep error - empty search array
+try {
+  fs.grep([]);
+} catch (error) {
+  console.error(error.message);
+  // "Search array cannot be empty or undefined."
 }
 ```
 
@@ -759,6 +803,14 @@ The package includes comprehensive unit and integration tests covering:
 
 - `BrowserFileSystemProvider.test.ts` - Unit tests for provider methods
 - `integration.test.ts` - End-to-end integration tests
+
+### Test Notes
+
+- Tests use `vitest` as the testing framework
+- Console warnings are mocked during tests to suppress mock implementation warnings from `copy` and `rename`
+- All provider methods are **synchronous** - tests do not use `await` when calling provider methods
+- Mock behavior for `copy` and `rename` with non-existent sources returns `true` without errors
+- Generator methods like `getDirectoryTree` are tested using `for await` for async iteration compatibility
 
 ## Dependencies
 
